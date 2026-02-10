@@ -1,0 +1,132 @@
+@media (prefers-color-scheme: dark) {
+	:root {
+		--background: #121721;
+		--text: #fff;
+		--textSecondary: #bbb;
+		--backgroundRGB: 0, 0, 0;
+		--textRGB: 255, 255, 255;
+		--inputBackground: #272f40;
+	}
+
+	#statusbar {
+		background: #070c14;
+	}
+
+}
+
+@media (prefers-color-scheme: light) {
+	:root {
+		--background: #dee3ed;
+		--text: #000;
+		--backgroundRGB: 255, 255, 255;
+		--textRGB: 0, 0, 0;
+		--statusbar: #070c14;
+		--inputBackground: #dadae8;
+	}
+
+	#statusbar {
+		background: #ecf1f8;
+	}
+
+	.titlebarLogo {
+		filter: invert(100%);
+	}
+}
+
+body {
+	background: var(--background);
+	color: var(--text);
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.label{
+	color: rgba(255, 255, 255, 0.9);
+	background: #103B5B;
+
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+	color: rgba(255, 255, 255, 1);
+	background: #103B5B;
+}
+
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active {
+	color: rgba(255, 255, 255, 0.7);
+	background: #103B5B;
+}
+
+input[type="text"],
+input[type="file"],
+input[type="password"],
+input[type="email"],
+input[type="url"],
+input[type="search"],
+input[type="tel"],
+input[type="number"],
+input[type="datetime"],
+input[type="date"],
+input[type="time"],
+.field-time-offset,
+textarea,
+select {
+	color: var(--text) !important;
+	background: var(--inputBackground) !important;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active{
+	background: var(--inputBackground) !important;
+	-webkit-box-shadow: 0 0 0 1000px var(--inputBackground) inset !important;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: var(--text);
+}
+select:not([multiple])::after{
+	content: "keyboard_arrow_down";
+	position: absolute;
+	color: var(--text);
+	font-family: "Material Icons";
+}
+
+input[type="checkbox"]:before {
+	background: #1B629B;
+}
+
+input[type="checkbox"]:checked:before {
+	background: #103B5B;
+}
+
+a {
+	color: inherit;
+}
+
+#topbar {
+	background: rgba(var(--backgroundRGB), 0.2);
+}
+
+#update-btn {
+	filter: grayscale(0.6);
+	background: #0A6600;
+}
+
+#update-btn.changed {
+	filter: grayscale(0);
+}
+
+#update-btn:hover {
+	background: #0A6600;
+}
+
+#sidebar {
+	background: rgba(var(--backgroundRGB), 0.80);
+	overflow-y: scroll;
+}

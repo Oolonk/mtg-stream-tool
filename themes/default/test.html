@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <script>
+        var piio = new OverlayConnector("test", ["scoreboard", "obsSceneChanged", "obsSceneList", 'streamQueue']);
+        piio.on("ready", (data) => {
+            console.log('init overlay', data)
+        })
+        piio.on("scoreboard", (data) => {
+            console.log('scoreboard changed', data);
+        })
+        piio.on("obsSceneChanged", (data) => {
+            console.log('OBS Scene Changed', data);
+        });
+        piio.on("obsSceneList", (data) => {
+            console.log('OBS Scene List updated', data);
+        });
+        piio.on("streamQueue", (data) => {
+            console.log('Stream Queue List updated', data);
+        });
+    </script>
+</body>
+
+</html>

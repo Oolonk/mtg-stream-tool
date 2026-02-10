@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3c33e15a-b702-425d-aeab-801c2f5feac6" name="Changes" comment="update highlighted card layout and add clear button functionality">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_/home/oolonk/Documents/GitHub/mtg-stream-tool" value="39CLGUNUXBH248Uee1f6oOXUvEf" />
+      <entry key="_E:/GitHub/mtg-stream-tool" value="394DT0wCHWVbJgswokn3CmkDf1W" />
+    </persistenceIdMap>
+  </component>
+  <component name="CopilotUserSelectedModel">
+    <selectedModels>
+      <entry key="inline" value="GPT-5 mini" />
+      <entry key="edit-panel" value="GPT-5 mini" />
+      <entry key="chat-panel" value="GPT-5 mini" />
+      <entry key="agent-panel" value="GPT-5 mini" />
+    </selectedModels>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Oolonk&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/Oolonk/mtg-stream-tool.git&quot;,
+    &quot;accountId&quot;: &quot;d799b126-f69a-49d5-96a4-021c9b3f18dd&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="394DT0wCHWVbJgswokn3CmkDf1W" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/oolonk/Documents/GitHub/mtg-stream-tool/img&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;npm.Starten.executor&quot;: &quot;Run&quot;,
+    &quot;npm.make-linux.executor&quot;: &quot;Run&quot;,
+    &quot;npm.start.executor&quot;: &quot;Run&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/home/oolonk/.local/share/JetBrains/Toolbox/apps/webstorm/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/img" />
+      <recent name="$PROJECT_DIR$/themes/default" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/plugins" />
+    </key>
+  </component>
+  <component name="RunManager" selected="npm.make-linux">
+    <configuration name="check update" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="npx npm-check-update -u" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="powershell.exe" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="Starten" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="start" />
+      <node-interpreter value="node" />
+      <package-manager value="npm" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="make-linux" type="js.build_tools.npm">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="make-linux" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="make-windows-x86" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="make-windows-x86" />
+      </scripts>
+      <node-interpreter value="project" />
+      <package-manager value="npm" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="make-windows" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="make-windows" />
+      </scripts>
+      <node-interpreter value="project" />
+      <package-manager value="npm" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="start" type="js.build_tools.npm" temporary="true" nameIsGenerated="true">
+      <package-json value="$PROJECT_DIR$/package.json" />
+      <command value="run" />
+      <scripts>
+        <script value="start" />
+      </scripts>
+      <node-interpreter value="project" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="npm.Starten" />
+      <item itemvalue="npm.make-linux" />
+      <item itemvalue="npm.make-windows-x86" />
+      <item itemvalue="npm.make-windows" />
+      <item itemvalue="npm.start" />
+      <item itemvalue="Shell Script.check update" />
+    </list>
+    <recent_temporary>
+      <list>
+        <item itemvalue="npm.start" />
+        <item itemvalue="npm.make-windows" />
+        <item itemvalue="npm.make-windows-x86" />
+        <item itemvalue="npm.make-windows" />
+        <item itemvalue="npm.make-windows-x86" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-WS-253.30387.83" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3c33e15a-b702-425d-aeab-801c2f5feac6" name="Changes" comment="" />
+      <created>1769946454058</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1769946454058</updated>
+      <workItem from="1769946455759" duration="2560000" />
+      <workItem from="1769949057392" duration="673000" />
+      <workItem from="1770057994176" duration="2406000" />
+      <workItem from="1770135704607" duration="1612000" />
+      <workItem from="1770146594228" duration="7160000" />
+      <workItem from="1770154042600" duration="1826000" />
+      <workItem from="1770195008707" duration="6795000" />
+      <workItem from="1770286456096" duration="3358000" />
+      <workItem from="1770291127941" duration="2808000" />
+      <workItem from="1770299526772" duration="1235000" />
+      <workItem from="1770325715330" duration="1431000" />
+      <workItem from="1770376299200" duration="1224000" />
+      <workItem from="1770548932311" duration="18968000" />
+      <workItem from="1770578511384" duration="4701000" />
+      <workItem from="1770584122707" duration="263000" />
+      <workItem from="1770586113704" duration="1284000" />
+      <workItem from="1770587787189" duration="889000" />
+      <workItem from="1770589930308" duration="475000" />
+      <workItem from="1770591449002" duration="94000" />
+      <workItem from="1770666006839" duration="2038000" />
+      <workItem from="1770744930041" duration="11300000" />
+    </task>
+    <task id="LOCAL-00001" summary="first init">
+      <option name="closed" value="true" />
+      <created>1770058415633</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1770058415633</updated>
+    </task>
+    <task id="LOCAL-00002" summary="add package.json">
+      <option name="closed" value="true" />
+      <created>1770135816893</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1770135816893</updated>
+    </task>
+    <task id="LOCAL-00003" summary="update first init event">
+      <option name="closed" value="true" />
+      <created>1770146965003</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1770146965003</updated>
+    </task>
+    <task id="LOCAL-00004" summary="remove not usefull stuff">
+      <option name="closed" value="true" />
+      <created>1770153424075</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1770153424075</updated>
+    </task>
+    <task id="LOCAL-00005" summary="add workspace.xml">
+      <option name="closed" value="true" />
+      <created>1770153811587</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1770153811587</updated>
+    </task>
+    <task id="LOCAL-00006" summary="add initial module configuration files">
+      <option name="closed" value="true" />
+      <created>1770153868078</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1770153868078</updated>
+    </task>
+    <task id="LOCAL-00007" summary="change Player Name&#10;Änderung der Package.json">
+      <option name="closed" value="true" />
+      <created>1770216559882</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1770216559882</updated>
+    </task>
+    <task id="LOCAL-00008" summary="fix insertPlayer&#10;delete first to&#10;bug fixes">
+      <option name="closed" value="true" />
+      <created>1770217622060</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1770217622060</updated>
+    </task>
+    <task id="LOCAL-00009" summary="remove crews">
+      <option name="closed" value="true" />
+      <created>1770286774731</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1770286774731</updated>
+    </task>
+    <task id="LOCAL-00010" summary="update overlay">
+      <option name="closed" value="true" />
+      <created>1770287350666</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1770287350666</updated>
+    </task>
+    <task id="LOCAL-00011" summary="change overlay: Score per Person TODO: logic">
+      <option name="closed" value="true" />
+      <created>1770289440248</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1770289440248</updated>
+    </task>
+    <task id="LOCAL-00012" summary="update bonjour logic">
+      <option name="closed" value="true" />
+      <created>1770291095002</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1770291095002</updated>
+    </task>
+    <task id="LOCAL-00013" summary="New Error on default theme missing">
+      <option name="closed" value="true" />
+      <created>1770298602219</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1770298602219</updated>
+    </task>
+    <task id="LOCAL-00014" summary="add manifest.json">
+      <option name="closed" value="true" />
+      <created>1770298709822</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1770298709822</updated>
+    </task>
+    <task id="LOCAL-00015" summary="refactor player score and life management; update UI elements and logic">
+      <option name="closed" value="true" />
+      <created>1770552552700</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1770552552700</updated>
+    </task>
+    <task id="LOCAL-00016" summary="implement Scryfall integration; add bulk data fetching and card management features">
+      <option name="closed" value="true" />
+      <created>1770583111249</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1770583111250</updated>
+    </task>
+    <task id="LOCAL-00017" summary="change app icon">
+      <option name="closed" value="true" />
+      <created>1770584231971</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1770584231971</updated>
+    </task>
+    <task id="LOCAL-00018" summary="add card name autocomplete feature and update card layout handling">
+      <option name="closed" value="true" />
+      <created>1770587271095</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1770587271095</updated>
+    </task>
+    <task id="LOCAL-00019" summary="fix saveAndQuit function to ensure proper application exit">
+      <option name="closed" value="true" />
+      <created>1770587969901</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1770587969901</updated>
+    </task>
+    <task id="LOCAL-00020" summary="add enable OBS feature and update settings handling">
+      <option name="closed" value="true" />
+      <created>1770590393221</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1770590393221</updated>
+    </task>
+    <task id="LOCAL-00021" summary="refactor database initialization and update Scryfall integration logging">
+      <option name="closed" value="true" />
+      <created>1770667517431</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1770667517431</updated>
+    </task>
+    <task id="LOCAL-00022" summary="add highlighted card feature with search and selection functionality">
+      <option name="closed" value="true" />
+      <created>1770754263121</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1770754263121</updated>
+    </task>
+    <task id="LOCAL-00023" summary="update highlighted card layout and add clear button functionality">
+      <option name="closed" value="true" />
+      <created>1770758144279</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1770758144279</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="first init" />
+    <MESSAGE value="add package.json" />
+    <MESSAGE value="update first init event" />
+    <MESSAGE value="remove not usefull stuff" />
+    <MESSAGE value="add workspace.xml" />
+    <MESSAGE value="add initial module configuration files" />
+    <MESSAGE value="change Player Name&#10;Änderung der Package.json" />
+    <MESSAGE value="fix insertPlayer&#10;delete first to&#10;bug fixes" />
+    <MESSAGE value="remove crews" />
+    <MESSAGE value="update overlay" />
+    <MESSAGE value="change overlay: Score per Person TODO: logic" />
+    <MESSAGE value="update bonjour logic" />
+    <MESSAGE value="New Error on default theme missing" />
+    <MESSAGE value="add manifest.json" />
+    <MESSAGE value="refactor player score and life management; update UI elements and logic" />
+    <MESSAGE value="implement Scryfall integration; add bulk data fetching and card management features" />
+    <MESSAGE value="change app icon" />
+    <MESSAGE value="add card name autocomplete feature and update card layout handling" />
+    <MESSAGE value="fix saveAndQuit function to ensure proper application exit" />
+    <MESSAGE value="add enable OBS feature and update settings handling" />
+    <MESSAGE value="refactor database initialization and update Scryfall integration logging" />
+    <MESSAGE value="add highlighted card feature with search and selection functionality" />
+    <MESSAGE value="update highlighted card layout and add clear button functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="update highlighted card layout and add clear button functionality" />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

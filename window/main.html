@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8"/>
+    <title>MTG Stream Tool</title>
+    <base href="../"/>
+
+    <script type="text/javascript" src="js/class/theme.class.js"></script>
+    <script type="text/javascript" src="js/class/db.class.js"></script>
+    <script type="text/javascript" src="js/class/player.class.js"></script>
+    <script type="text/javascript" src="js/class/deck.class.js"></script>
+    <script type="text/javascript" src="js/class/ws.class.js"></script>
+    <script type="text/javascript" src="js/class/trigger.class.js"></script>
+    <script type="text/javascript" src="js/class/midi.class.js"></script>
+    <script type="text/javascript" src="js/class/websites.class.js"></script>
+
+    <script type="text/javascript" src="js/general.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+    <script type="text/javascript" src="js/main.smashgg.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="style/general.css"/>
+    <link rel="stylesheet" type="text/css" href="style/main.css"/>
+</head>
+
+<body>
+<div id="titlebar"></div>
+<div id="topbar">
+    <div class="update">
+        <button id="update-btn" onclick="update();"><img src="img/right-arrow.svg" height="24"/><img
+                src="img/right-arrow.svg" height="24"/></button>
+        <input type="checkbox" class="red" value="1" id="autoupdate-cbx" onclick="toggleAutoUpdate()"/>
+        <label for="autoupdate-cbx">Autoupdate</label>
+    </div>
+    <div id="working" class="material-icons" onclick="alert(bgWork.workers.join(', '))"></div>
+    <div id="clock">
+        <div>00:00</div>
+        <div>N/A</div>
+    </div>
+</div>
+<div id="sidebar">
+    <div id="logo"></div>
+    <nav>
+        <a href="javascript:openWindow('database');">Database</a>
+        <a href="javascript:openWindow('assets');">Assets Manager</a>
+        <!-- <a href="javascript:openWindow('matchlist');">Matchlist</a> -->
+        <!-- <a href="javascript:openWindow('shortcuts');">Shortcuts</a> -->
+        <!-- <a href="javascript:openWindow('overlays');">Overlays</a> -->
+        <a href="javascript:openSettingsWindow();">Settings</a>
+        <a href="javascript:shell.openExternal(APPRES+'/');">File Explorer*</a>
+        <a
+                href="javascript:shell.openExternal('http://127.0.0.1:'+ (remote.getGlobal('ARGV').port ? remote.getGlobal('ARGV').port  :(process.platform === 'win32' ? '80': '8000')))">Website</a>
+    </nav>
+    <!-- <div id="sidebar-matchlist"> -->
+    <!-- <button id="new-match-btn" onclick="newMatch();">NEW MATCH</button> -->
+    <!-- </div> -->
+    <div id="sidebar-buttons">
+        <div class="obsbtn-div hide">
+            <button id="start-obs-btn" onclick="startObs();">START OBS</button>
+            <button id="stop-obs-btn" onclick="stopObs();" style="display: none;">STOP OBS</button>
+        </div>
+        <div class="obsbtn-div hide">
+        </div>
+    </div>
+    <div id="sidebar-options">
+        <select id="theme-select" onchange="setTheme(this.value)"></select>
+        <div>
+            <label for="playersize-select">Player Amount:</label>
+            <input id="playersize-select" type="number" min="2" max="999" onchange="setPlayerSize(this.value)"
+                   oninput="setPlayerSize(this.value)"/>
+        </div>
+    </div>
+    <div id="footer">
+        <div>MTG Stream Tool</div>
+        <div id="version">ver 0.0.0</div>
+    </div>
+</div>
+<div id="main">
+    <div id="sb">
+        <div id="sb-team">
+            <div id="sb-players"></div>
+        </div>
+        <div id="sb-middle">
+            <button onclick="resetLife();">Reset Life</button>
+            <button onclick="resetScore();">Reset Score</button>
+            <select class="matchmaking" id="matchmaking-mode" onchange="setMatchmakingMode(this.value)">
+                <option value="0">Freeplay</option>
+                <option value="1">Best of</option>
+            </select>
+            <input class="matchmaking" type="number" id="matchmaking-value" value="3" min="1" oninput="setMatchmakingValue(this.value)"/>
+        </div>
+        <template id="sb-player-tpl">
+            <div class="playername">
+                <div class="country"></div>
+                <div class="team"></div>
+                <input type="text" value="" list="playernames" class="playername" placeholder="Playername"/>
+            </div>
+            <div class="deckname">
+                <input type="text" value="" class="deckname" placeholder="Deckname"/>
+                <div class="player-ports"></div>
+            </div>
+            <div class="player-options">
+                <button class="player-edit-btn" disabled><span class="material-icons">person</span></button>
+                <button class="player-multi-btn" disabled><span class="material-icons">group</span></button>
+                <button class="player-create-btn" disabled><span class="material-icons">person_add</span></button>
+            </div>
+            <div class="player-scoredata">
+                <div class="player-life">
+                    <div class="score-label label">Life</div>
+                    <button class="score sb-score-dec" onclick="modifyLife(#INDEX#, -1);"><span class="material-icons">remove</span></button>
+                    <input class="score sb-score-val sb-life-input" id="sb-life-val-#INDEX#" type="number" value="0" min="0"
+                           oninput="modifyLife(#INDEX#, this.value, true)"/>
+                    <button class="score sb-score-inc" onclick="modifyLife(#INDEX#, 1);"><span class="material-icons">add</span></button>
+                </div>
+                <div class="player-score">
+                    <div class="score-label label">Score</div>
+                    <button class="score sb-score-dec" onclick="modifyScore(#INDEX#, -1);"><span class="material-icons">remove</span></button>
+                    <input class="score sb-score-val sb-score-input" id="sb-score-val-#INDEX#" type="number" value="0" min="0"
+                           oninput="modifyScore(#INDEX#, this.value, true)"/>
+                    <button class="score sb-score-inc" onclick="modifyScore(#INDEX#, 1);"><span class="material-icons">add</span></button>
+                </div>
+                <div class="state sb-state" id="sb-state-#INDEX#">
+                    <button class="none" onclick="setTeamState(#INDEX#, 1);">None</button>
+                    <button class="winners" onclick="setTeamState(#INDEX#, 2);">Winners</button>
+                    <button class="losers" onclick="setTeamState(#INDEX#, 0);">Losers</button>
+                </div>
+            </div>
+        </template>
+        <datalist id="playernames"></datalist>
+        <datalist id="cardnames"></datalist>
+    </div>
+    <div id="seatorder-wrap">
+        <div id="highlighted-card">
+            <div class="item dragable" id="" style="transform: translate(0px, 0px);">
+                <div class="search">
+                    <input type="text" value="">
+                    <div class="selection"><div class="item clear highlighted"><div class="name" id=""></div><div class="team" id=""></div></div></div>
+                </div>
+                <div class="info">
+                    <div class="bg">
+                        <button class="clear" id="highlighted-card-clear" onclick="setHighlightedCard({})"><span class="material-icons">clear</span> </button>
+                        <div class="name"></div>
+                    </div>
+                    <div class="player-options">
+                        <button id="highlighted-card-front-side" class="player-edit-btn" title="Front Side"onclick="changeHighlightedCardSide('front')"><span class="ms ms-dfc-front" style="font-size: 15px"></span></button>
+                        <button id="highlighted-card-back-side" class="player-edit-btn" title="Back Side" onclick="changeHighlightedCardSide('back')"><span class="ms ms-dfc-back" style="font-size: 15px"></span></button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div id="caster-wrap">
+        <div id="caster"></div>
+        <div id="caster-action">
+            <button class="caster-add-btn" onclick="casterAdd()"><span class="material-icons">add</span></button>
+            <button class="caster-add-btn" onclick="casterDelete()"><span class="material-icons">remove</span></button>
+        </div>
+    </div>
+    <template id="caster-item-tpl">
+        <div class="search">
+            <input type="text" value=""/>
+            <div class="selection"></div>
+        </div>
+        <div class="info">
+            <div class="bg">
+                <div class="name"></div>
+                <div class="twitter"></div>
+            </div>
+            <div class="player-options">
+                <button class="player-edit-btn" disabled><span class="material-icons" style="font-size: 15px">person</span></button>
+            </div>
+        </div>
+    </template>
+    <div id="fields"></div>
+    <template id="fields-text-tpl">
+        <input type="text" class="ref" value=""/>
+    </template>
+    <template id="fields-dropdown-tpl">
+        <select class="ref"></select>
+    </template>
+    <template id="fields-scenes-tpl">
+        <select class="ref obsSceneDropdown"></select>
+    </template>
+    <template id="fields-time-tpl">
+        <input type="time" class="ref" value=""/>
+        <div class="field-time-offset">
+            <span>H:</span>
+            <input type="text" value="0" onblur="this.value = Math.abs(parseInt(this.value) || 0)"/>
+            <span>M:</span>
+            <input type="text" value="0" onblur="this.value = Math.abs(parseInt(this.value) || 0)"/>
+            <button class="material-icons" style="font-size: 17px">check</button>
+        </div>
+    </template>
+    <template id="fields-color-tpl">
+        <input type="text" class="ref" oninput="this.parentNode.childNodes[4].value = this.value;" value=""/>
+        <input type="color"
+               onchange="this.parentNode.childNodes[2].value = this.value;this.parentNode.childNodes[2].dispatchEvent(new Event('input'));"
+               value=""/>
+    </template>
+</div>
+<div id="statusbar">
+    <div id="system-status"><span id="obs-status"></span><span id="scryfall-status"></span></div>
+</div>
+
+<div id="stream-queue" class="empty">
+    <div class="list">
+        <div class="title">
+            <div class="channel">No stream selected</div>
+            <div class="setcount">0</div>
+        </div>
+        <div class="sets"></div>
+    </div>
+    <div class="current" onclick="this.parentNode.classList.toggle('visible')">No set selected</div>
+    <div class="icon material-icons" onclick="openStreamQueueOptions()">settings</div>
+    <div class="next" onclick="smashggApplyNextSet()"></div>
+</div>
+
+<div id="modal" onclick="hideModal();">
+    <div class="close" onclick="hideModal()"></div>
+    <div class="panel" onclick="event.stopPropagation();"></div>
+</div>
+</body>
+
+</html>
