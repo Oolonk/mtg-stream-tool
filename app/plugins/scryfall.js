@@ -109,6 +109,9 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
                     updateImages = false;
                 }
             }
+            if(doc.set != card.set){
+                updateImages = true;
+            }
             try {
                 await promisifyDb(db.update.bind(db), {_id: card._id}, card, {});
             } catch (err) {
