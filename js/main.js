@@ -1,5 +1,6 @@
 const {shell, ipcMain} = require('electron');
 const fs = require('fs');
+const path = require("path");
 const emitter = new (require("events"))();
 
 const APPROOT = remote.getGlobal("APPROOT").replace(/\\/g, '/');
@@ -118,7 +119,7 @@ async function init() {
     }
 
 
-    fs.readFile('scoreboard.json', 'utf8', (err, data) => {
+    fs.readFile(path.join(remote.app.getPath('userData'),'scoreboard.json'), 'utf8', (err, data) => {
         if (!err) {
             try {
                 scoreboard = Object.assign(scoreboard, JSON.parse(data));
@@ -1292,7 +1293,7 @@ async function update() {
     } // prevent multiple updates due to delay
     _ws.send("scoreboard", {scoreboard, dbEntries});
     insertMatchList(scoreboard);
-    fs.writeFileSync('scoreboard.json', JSON.stringify(scoreboard)); // legacy - reads startup data
+    fs.writeFileSync(path.join(path.join(remote.app.getPath('userData'),'scoreboard.json')), JSON.stringify(scoreboard)); // legacy - reads startup data
     fire("update");
 }
 

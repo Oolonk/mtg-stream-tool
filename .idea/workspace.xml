@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="3c33e15a-b702-425d-aeab-801c2f5feac6" name="Changes" comment="update highlighted card layout and add clear button functionality">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/main.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +35,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="main" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -66,7 +72,7 @@
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/oolonk/Documents/GitHub/mtg-stream-tool/img&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/oolonk/MTG Stream Tool&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -88,7 +94,7 @@
       <recent name="$PROJECT_DIR$/app/plugins" />
     </key>
   </component>
-  <component name="RunManager" selected="npm.make-linux">
+  <component name="RunManager" selected="npm.start">
     <configuration name="check update" type="ShConfigurationType">
       <option name="SCRIPT_TEXT" value="npx npm-check-update -u" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
@@ -206,7 +212,9 @@
       <workItem from="1770589930308" duration="475000" />
       <workItem from="1770591449002" duration="94000" />
       <workItem from="1770666006839" duration="2038000" />
-      <workItem from="1770744930041" duration="11300000" />
+      <workItem from="1770744930041" duration="11606000" />
+      <workItem from="1770797574353" duration="205000" />
+      <workItem from="1770805331113" duration="551000" />
     </task>
     <task id="LOCAL-00001" summary="first init">
       <option name="closed" value="true" />
