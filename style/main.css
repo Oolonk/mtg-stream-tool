@@ -391,8 +391,8 @@ body.modal #modal {
     grid-template-rows: auto;
     grid-template-columns: 1fr 100px 1fr;
     grid-template-areas:
-		"sbteam sbteam sbteam sbteam sbteam"
-		"sbinfo1 sbinfo1 sbmiddle sbinfo2 sbinfo2";
+        "sbteam sbteam sbteam sbteam sbteam"
+        "sbmiddle sbmiddle sbmiddle sbmiddle sbmiddle";
     margin: 0 0 10px;
 }
 
@@ -791,8 +791,19 @@ body.modal #modal {
 }
 
 #sb-middle {
+    display: grid;
+    flex-direction: row;
+    flex-grow: inherit;
+    align-items: center;
+    width: 100%;
+    column-count: 4;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 10px;
     grid-area: sbmiddle;
-    align-self: center;
+}
+#sb-middle:has(.matchmaking[style*="display: none"]) {
+    column-count: 3;
+    grid-template-columns: 1fr 1fr 1fr;
 }
 
 #sb-middle > * {

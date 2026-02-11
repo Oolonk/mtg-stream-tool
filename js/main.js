@@ -20,7 +20,7 @@ var scoreboard = {
     seatorder: [],
     matchformat: {
         type: 0,
-        value: 0,
+        value: 3,
     },
     fields: {},
     highlightedCard: {
