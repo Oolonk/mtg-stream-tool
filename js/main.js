@@ -66,8 +66,9 @@ on("load", buildPlayerAutoCompleteList);
 on("load", clockUpdate);
 on("scoreboardchanged", autoUpdate);
 on("scoreboardchanged", insertHighlightedCardUI);
+on("scoreboardteamschanged", changePlayerAmount);
+on("scoreboardteamschanged", insertPlayerUI);
 on("scoreboardcasterchanged", insertCasterUI);
-on("scoreboardteamschanged", insertPlayer);
 on("themechanged", buildFieldList);
 on("themechanged", insertScoreboardData);
 on("themechanged", changePlayerAmount);
@@ -688,6 +689,7 @@ async function playerNameInput(e) {
     scoreboard.players[player].player = new Player(po);
     txb.insertValue(po.name);
     parent.dataset.returnId = Math.floor(Math.random() * 1000000);
+    insertPlayerUI(player)
     fire("scoreboardchanged");
 }
 
@@ -964,7 +966,7 @@ console.log(po);
     } else {
         country = APPRES + '/assets/country/' + po.country + '.svg';
     }
-
+    console.log(country);
     if (po.InDB) {
         db.get("team", {$or: [].concat(po.team).map(x => ({"_id": x}))}).then(entry => {
             let value = entry.map(x => x.name).join(", ");
