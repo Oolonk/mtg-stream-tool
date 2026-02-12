@@ -406,6 +406,8 @@ body.modal #modal {
 
 #sb-team {
     grid-area: sbteam;
+    width: 100%;
+    overflow-y: scroll;
 }
 
 #sb-team-2 {
