@@ -54,6 +54,7 @@ var client = {
 var portAmount = 4;
 var minAmountPlayers = 2;
 var maxAmountPlayers = 4;
+var startingLife = 20;
 
 addEventListener("load", () => fire("load"));
 
@@ -72,6 +73,9 @@ on("scoreboardcasterchanged", insertCasterUI);
 on("themechanged", buildFieldList);
 on("themechanged", insertScoreboardData);
 on("themechanged", changePlayerAmount);
+on("themechanged", function(){
+    startingLife = _theme.startinglife != null ? _theme.startinglife : 20;
+});
 
 once("themechanged", buildThemeSelection);
 on("streamqueuechanged", streamqueuechanged);
@@ -346,7 +350,7 @@ function buildTeamPlayerList() {
             deckNameElm.oninput = deckNameInput;
             playerEditBtn.onclick = editPlayer;
             playerAddBtn.onclick = editPlayer;
-            playerLifeElm.value = scoreboard.players[i].life ? scoreboard.players[i].life : 20;
+            playerLifeElm.value = scoreboard.players[i].life ? scoreboard.players[i].life : startingLife;
             playerScoreElm.value = scoreboard.players[i].score ? scoreboard.players[i].score : 0;
 
 
@@ -597,6 +601,16 @@ function buildHighlightedCard() {
             }
             insertHighlightedCardUI();
         }
+        if(document.getElementsByClassName("highlighted-card-rotation-btn").length > 0) {
+            for(let i = 0; i < document.getElementsByClassName("highlighted-card-rotation-btn").length; i++){
+                var btn = document.getElementsByClassName("highlighted-card-rotation-btn")[i];
+                if (btn.dataset.value == scoreboard.highlightedCard.rotation.toString()) {
+                    btn.classList.add("checked");
+                } else {
+                    btn.classList.remove("checked");
+                }
+            }
+        }
 }
 on("themechanged", buildCasterList);
 on("themechanged", buildHighlightedCard);
@@ -828,7 +842,7 @@ function resetScore() {
 
 function resetLife() {
     scoreboard.players.forEach((player, index) => {
-        modifyLife(index, 20, true);
+        modifyLife(index, startingLife, true);
     })
 }
 
@@ -847,11 +861,24 @@ function modifyLife(player, inc, absolute) {
     let value = parseInt(inc);
     if (!absolute)
         value += parseInt(scoreboard.players[player].life);
-    if (value < 0 || isNaN(value))
-        value = 0;
     scoreboard.players[player].life = value;
     document.getElementById('sb-life-val-' + player).value = value;
     fire("scoreboardchanged", true);
+}
+
+function setHighlightedCardRotation(rotation) {
+    scoreboard.highlightedCard.rotation = rotation;
+    fire("scoreboardchanged", true);
+    if(document.getElementsByClassName("highlighted-card-rotation-btn").length > 0) {
+        for(let i = 0; i < document.getElementsByClassName("highlighted-card-rotation-btn").length; i++){
+            var btn = document.getElementsByClassName("highlighted-card-rotation-btn")[i];
+            if (btn.dataset.value == rotation.toString()) {
+                btn.classList.add("checked");
+            } else {
+                btn.classList.remove("checked");
+            }
+        }
+    }
 }
 
 function setTeamState(player, state) {
@@ -1501,7 +1528,9 @@ ipcRenderer.on('obsSceneChanged', (event, name) => {
     obs.currentScene = name;
     obsUpdate('SceneChanged', obs);
 });
-
+ipcRenderer.on('mainready', (event, args) => {
+    ipcRenderer.send('updateScryfall', args);
+});
 
 function startObs() {
     ipcRenderer.send("obs", "start");

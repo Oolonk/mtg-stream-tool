@@ -131,20 +131,27 @@
     </div>
     <div id="seatorder-wrap">
         <div id="highlighted-card">
-            <div class="item dragable" id="" style="transform: translate(0px, 0px);">
-                <div class="search">
-                    <input type="text" value="">
-                    <div class="selection"><div class="item clear highlighted"><div class="name" id=""></div><div class="team" id=""></div></div></div>
+            <div id="highlighted-card-wrap">
+                <div class="item dragable" id="" style="transform: translate(0px, 0px);">
+                    <div class="search">
+                        <input type="text" value="">
+                        <div class="selection"><div class="item clear highlighted"><div class="name" id=""></div><div class="team" id=""></div></div></div>
+                    </div>
+                    <div class="info">
+                        <div class="bg">
+                            <button class="clear" id="highlighted-card-clear" onclick="setHighlightedCard({})"><span class="material-icons">clear</span> </button>
+                            <div class="name"></div>
+                        </div>
+                        <div class="player-options">
+                            <button id="highlighted-card-front-side" class="player-edit-btn" title="Front Side"onclick="changeHighlightedCardSide('front')"><span class="ms ms-dfc-front" style="font-size: 15px"></span></button>
+                            <button id="highlighted-card-back-side" class="player-edit-btn" title="Back Side" onclick="changeHighlightedCardSide('back')"><span class="ms ms-dfc-back" style="font-size: 15px"></span></button>
+                        </div>
+                    </div>
                 </div>
-                <div class="info">
-                    <div class="bg">
-                        <button class="clear" id="highlighted-card-clear" onclick="setHighlightedCard({})"><span class="material-icons">clear</span> </button>
-                        <div class="name"></div>
-                    </div>
-                    <div class="player-options">
-                        <button id="highlighted-card-front-side" class="player-edit-btn" title="Front Side"onclick="changeHighlightedCardSide('front')"><span class="ms ms-dfc-front" style="font-size: 15px"></span></button>
-                        <button id="highlighted-card-back-side" class="player-edit-btn" title="Back Side" onclick="changeHighlightedCardSide('back')"><span class="ms ms-dfc-back" style="font-size: 15px"></span></button>
-                    </div>
+                <div id="highlighted-card-rotations">
+                    <div class="highlighted-card-rotation-btn" data-value="0" onclick="setHighlightedCardRotation(0)">0&deg;</div>
+                    <div class="highlighted-card-rotation-btn" data-value="90" onclick="setHighlightedCardRotation(90)">90&deg;</div>
+                    <div class="highlighted-card-rotation-btn" data-value="180" onclick="setHighlightedCardRotation(180)">180&deg;</div>
                 </div>
             </div>
 

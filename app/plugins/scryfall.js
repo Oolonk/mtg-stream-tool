@@ -87,7 +87,7 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
             continue;
         }
 
-        card._id = card.id;
+        card._id = card.oracle_id || card.card_faces[0].oracle_id;
         let doc = null;
         try {
             // wait for findOne to complete
@@ -124,7 +124,7 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
             try {
                 await this.downloadCardImages(card);
             } catch (e) {
-                console.error('downloadCardImages failed for', card.id, e);
+                console.error('downloadCardImages failed for', card._id, e);
             }
         }
     }
@@ -158,7 +158,7 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
             const response = await fetch(imageUrl);
             if (!response.ok) throw new Error(`Failed fetching image: ${response.status} ${response.statusText}`);
             const buffer = Buffer.from(await response.arrayBuffer());
-            await fsPromises.writeFile(`${APPRES}/assets/card/front/${card.id}.png`, buffer);
+            await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id}.png`, buffer);
             return;
         }
 
@@ -170,12 +170,12 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
                 const resp1 = await fetch(card.card_faces[0].image_uris.png);
                 if (!resp1.ok) throw new Error(`Failed fetching image face 1: ${resp1.status}`);
                 const buf1 = Buffer.from(await resp1.arrayBuffer());
-                await fsPromises.writeFile(`${APPRES}/assets/card/front/${card.id}.png`, buf1);
+                await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id}.png`, buf1);
 
                 const resp2 = await fetch(card.card_faces[1].image_uris.png);
                 if (!resp2.ok) throw new Error(`Failed fetching image face 2: ${resp2.status}`);
                 const buf2 = Buffer.from(await resp2.arrayBuffer());
-                await fsPromises.writeFile(`${APPRES}/assets/card/back/${card.id}.png`, buf2);
+                await fsPromises.writeFile(`${APPRES}/assets/card/back/${card._id}.png`, buf2);
                 return;
             }
             default: {
@@ -183,12 +183,12 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
                 const resp = await fetch(card.card_faces && card.card_faces[0] ? card.card_faces[0].image_uris.png : null);
                 if (!resp || !resp.ok) throw new Error('No image available for card');
                 const buf = Buffer.from(await resp.arrayBuffer());
-                await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id || card.id}.png`, buf);
+                await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id || card._id}.png`, buf);
                 return;
             }
         }
     } catch (e){
-        console.log(`Error downloading images for card ${card.name} (${card.id}), retrying...`, e);
+        console.log(`Error downloading images for card ${card.name} (${card._id}), retrying...`, e);
         // exponential backoff/retry could be used; keep simple retry after delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         return this.downloadCardImages(card);

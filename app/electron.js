@@ -104,6 +104,8 @@ async function createMainWindow() {
 		setTimeout(() => splashWin.close(), 1000);
 	}, 500));
 	mainWin.loadFile('window/main.html');
+	// Send message to app/main.js that main window is ready
+	mainWin.webContents.on('did-finish-load', () => mainWin.webContents.send('mainready'));
 	mainWin.on('resize', e => {
 		if (!mainWin.isMaximized()) {
 			let size = mainWin.getSize();

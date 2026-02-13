@@ -51,53 +51,67 @@ function folder() {
 }
 var sessionTimestamp = new Date().getTime();
 var clientSettings = new nedb({ filename: path.join(APPUSERDATA, 'settings.db'), autoload: true });
-clientSettings.find({ name: "scryfall-lastUpdated" }, async (e, row) => {
-	var lastUpdated = null;
-	if (e || !row || !row[0]) {
-		console.log("No Scryfall last update timestamp found, initializing with null.");
-		clientSettings.insert({ name: "scryfall-lastUpdated", value: null });
-	} else {
-		console.log("Scryfall last update timestamp found:", row[0].value);
-		lastUpdated = row[0].value;
-	}
-	console.log(lastUpdated);
-	var scryfall = new Scryfall;
-	scryfall.lastCreated = lastUpdated;
-	scryfall.nedb = new nedb({ filename: path.join(electron.APP.getPath("home"), 'MTG Stream Tool', 'db', 'card'), autoload: true });
-	scryfall.on("fetchingBulkData", () => {
-		console.log("Fetching Scryfall bulk data...");
-		scryfallUpdateRunning = true;
-		server.broadcast({ type: 'scryfallBulkDataUpdate', data: { status: 'start' } });
-		electron.send('scryfallBulkDataUpdate', { status: 'start' });
-	});
-	scryfall.on("noUpdateNeeded", () => {
-	 server.broadcast({type: 'scryfallBulkDataUpdate', data: { status: 'upToDate' } });
-		electron.send('scryfallBulkDataUpdate', { status: 'upToDate' });
-	 scryfallUpdateRunning = false;
-	});
-	scryfall.on('insertingCard', (data) => {
-		server.broadcast({ type: 'scryfallBulkDataUpdate', data: { status: 'inserting', progress: {
+async function initScryfall() {
+	clientSettings.find({name: "scryfall-lastUpdated"}, async (e, row) => {
+		var lastUpdated = null;
+		if (e || !row || !row[0]) {
+			console.log("No Scryfall last update timestamp found, initializing with null.");
+			clientSettings.insert({name: "scryfall-lastUpdated", value: null});
+		} else {
+			console.log("Scryfall last update timestamp found:", row[0].value);
+			lastUpdated = row[0].value;
+		}
+		console.log(lastUpdated);
+		var scryfall = new Scryfall;
+		scryfall.lastCreated = lastUpdated;
+		scryfall.nedb = new nedb({
+			filename: path.join(electron.APP.getPath("home"), 'MTG Stream Tool', 'db', 'card'),
+			autoload: true
+		});
+		scryfall.on("fetchingBulkData", () => {
+			console.log("Fetching Scryfall bulk data...");
+			scryfallUpdateRunning = true;
+			server.broadcast({type: 'scryfallBulkDataUpdate', data: {status: 'start'}});
+			electron.send('scryfallBulkDataUpdate', {status: 'start'});
+		});
+		scryfall.on("noUpdateNeeded", () => {
+			server.broadcast({type: 'scryfallBulkDataUpdate', data: {status: 'upToDate'}});
+			electron.send('scryfallBulkDataUpdate', {status: 'upToDate'});
+			scryfallUpdateRunning = false;
+		});
+		scryfall.on('insertingCard', (data) => {
+			server.broadcast({
+				type: 'scryfallBulkDataUpdate', data: {
+					status: 'inserting', progress: {
+						current: data.current,
+						total: data.total,
+						percentage: ((data.current / data.total) * 100).toFixed(2)
+					}
+				}
+			});
+			electron.send('scryfallBulkDataUpdate', {
+				status: 'inserting', progress: {
 					current: data.current,
 					total: data.total,
 					percentage: ((data.current / data.total) * 100).toFixed(2)
-				} } });
-		electron.send('scryfallBulkDataUpdate', { status: 'inserting', progress: {
-					current: data.current,
-					total: data.total,
-					percentage: ((data.current / data.total) * 100).toFixed(2)
-				} });
-		// console.log(`Inserting card ${data.current} of ${data.total} (${((data.current / data.total) * 100).toFixed(2)}%)`);
-	});
-	scryfall.on('updateFinished', (data) => {
-		clientSettings.update({ "name": "scryfall-lastUpdated" }, { "name": "scryfall-lastUpdated", "value": scryfall.lastCreated }, { upsert: true });
-		console.log("Scryfall bulk data update finished.");
-		scryfallUpdateRunning = false;
-		server.broadcast({ type: 'scryfallBulkDataUpdate', data: { status: 'finished' } });
-		electron.send('scryfallBulkDataUpdate', { status: 'finished' });
-	})
-	scryfall.updateCards();
+				}
+			});
+			// console.log(`Inserting card ${data.current} of ${data.total} (${((data.current / data.total) * 100).toFixed(2)}%)`);
+		});
+		scryfall.on('updateFinished', (data) => {
+			clientSettings.update({"name": "scryfall-lastUpdated"}, {
+				"name": "scryfall-lastUpdated",
+				"value": scryfall.lastCreated
+			}, {upsert: true});
+			console.log("Scryfall bulk data update finished.");
+			scryfallUpdateRunning = false;
+			server.broadcast({type: 'scryfallBulkDataUpdate', data: {status: 'finished'}});
+			electron.send('scryfallBulkDataUpdate', {status: 'finished'});
+		})
+		scryfall.updateCards();
 
-});
+	});
+}
 
 
 // init server
@@ -112,6 +126,9 @@ function port() {
 server.port = global.ARGV.port || port();
 server.root = folder();
 
+electron.ipcMain.once('updateScryfall', async () => {
+	initScryfall();
+});
 server.on("listening", function() {
 	electron.createMainWindow();
 	});
