@@ -715,7 +715,7 @@ body.modal #modal {
 .player-scoredata{
     display: flex;
 }
-.player-life, .player-score {
+.player-life, .player-score, .player-poison {
     margin: 0 2px;
     display: table;
 }

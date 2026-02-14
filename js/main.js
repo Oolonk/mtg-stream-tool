@@ -339,6 +339,7 @@ function buildTeamPlayerList() {
             let playerAddBtn = playerItemEl.querySelector(".player-create-btn");
             let playerColorBtns = playerItemEl.querySelector(".player-ports").truncate();
             let playerLifeElm = playerItemEl.querySelector(".sb-life-input");
+            let playerPoisonElm = playerItemEl.querySelector(".sb-poison-input");
             let playerScoreElm = playerItemEl.querySelector(".sb-score-input");
             playerItemEl.dataset.player = i;
 
@@ -351,6 +352,7 @@ function buildTeamPlayerList() {
             playerEditBtn.onclick = editPlayer;
             playerAddBtn.onclick = editPlayer;
             playerLifeElm.value = scoreboard.players[i].life ? scoreboard.players[i].life : startingLife;
+            playerPoisonElm.value = scoreboard.players[i].poison ? scoreboard.players[i].poison : 0;
             playerScoreElm.value = scoreboard.players[i].score ? scoreboard.players[i].score : 0;
 
 
@@ -829,7 +831,7 @@ function setPlayerSize(size) {
             scoreboard.players[i].deck = new Deck();
             scoreboard.players[i].score = 0;
             scoreboard.players[i].life = 0;
-            scoreboard.players[i].state = 0;
+            scoreboard.players[i].poison = 0;
         }
     buildTeamPlayerList();
 }
@@ -843,6 +845,7 @@ function resetScore() {
 function resetLife() {
     scoreboard.players.forEach((player, index) => {
         modifyLife(index, startingLife, true);
+        modifyPoison(index, 0, true);
     })
 }
 
@@ -861,8 +864,21 @@ function modifyLife(player, inc, absolute) {
     let value = parseInt(inc);
     if (!absolute)
         value += parseInt(scoreboard.players[player].life);
+    if (isNaN(value))
+        return
     scoreboard.players[player].life = value;
     document.getElementById('sb-life-val-' + player).value = value;
+    fire("scoreboardchanged", true);
+}
+
+function modifyPoison(player, inc, absolute) {
+    let value = parseInt(inc);
+    if (!absolute)
+        value += parseInt(scoreboard.players[player].poison);
+    if (value < 0 || isNaN(value))
+        value = 0;
+    scoreboard.players[player].poison = value;
+    document.getElementById('sb-poison-val-' + player).value = value;
     fire("scoreboardchanged", true);
 }
 
@@ -881,20 +897,12 @@ function setHighlightedCardRotation(rotation) {
     }
 }
 
-function setTeamState(player, state) {
-    let el = document.getElementById('sb-state-' + player);
-    el.classList.toggle("winners", state == 1);
-    el.classList.toggle("losers", state == 2);
-    scoreboard.players[player].state = state;
-    fire("scoreboardchanged", true);
-}
 
 function clearBoard() {
     for (let teamNum in scoreboard.players) {
         let team = scoreboard.players[teamNum];
         team.player = new Player();
         team.score = 0;
-        team.state = 0;
     }
     scoreboard.startgg = {
         set: null,

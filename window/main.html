@@ -112,17 +112,19 @@
                            oninput="modifyLife(#INDEX#, this.value, true)"/>
                     <button class="score sb-score-inc" onclick="modifyLife(#INDEX#, 1);"><span class="material-icons">add</span></button>
                 </div>
+                <div class="player-poison">
+                    <div class="score-label label" ><span class="ms ms-h"></span></div>
+                    <button class="score sb-score-dec" onclick="modifyPoison(#INDEX#, -1);"><span class="material-icons">remove</span></button>
+                    <input class="score sb-score-val sb-poison-input" id="sb-poison-val-#INDEX#" type="number" value="0"
+                           oninput="modifyPoison(#INDEX#, this.value, true)"/>
+                    <button class="score sb-score-inc" onclick="modifyPoison(#INDEX#, 1);"><span class="material-icons">add</span></button>
+                </div>
                 <div class="player-score">
                     <div class="score-label label">Score</div>
                     <button class="score sb-score-dec" onclick="modifyScore(#INDEX#, -1);"><span class="material-icons">remove</span></button>
                     <input class="score sb-score-val sb-score-input" id="sb-score-val-#INDEX#" type="number" value="0"
                            oninput="modifyScore(#INDEX#, this.value, true)"/>
                     <button class="score sb-score-inc" onclick="modifyScore(#INDEX#, 1);"><span class="material-icons">add</span></button>
-                </div>
-                <div class="state sb-state" id="sb-state-#INDEX#">
-                    <button class="none" onclick="setTeamState(#INDEX#, 1);">None</button>
-                    <button class="winners" onclick="setTeamState(#INDEX#, 2);">Winners</button>
-                    <button class="losers" onclick="setTeamState(#INDEX#, 0);">Losers</button>
                 </div>
             </div>
         </template>

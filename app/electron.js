@@ -85,7 +85,7 @@ async function createMainWindow() {
 	mainWin = new BrowserWindow({
 		width: mainConf.width || 1700,
 		height: mainConf.height || 800,
-		minWidth: 780,
+		minWidth: 850,
 		minHeight: 350,
 		frame: false,
 		maximizable: true,
