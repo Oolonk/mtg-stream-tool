@@ -52,7 +52,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "MTG Stream Tool",
+            "name": "mtg-stream-tool",
             "title": "MTG Stream Tool",
             "setupIcon": "./app/logo.ico",
             "loadingGif": "img/loading.gif"
