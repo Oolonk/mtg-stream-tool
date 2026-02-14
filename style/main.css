@@ -549,7 +549,7 @@ body.modal #modal {
     display: flex;
 }
 
-#sb > div .player-options > button {
+#sb > div .player-options  button {
     position: relative;
     margin: 0 4px;
     padding: 0;
@@ -562,17 +562,17 @@ body.modal #modal {
     color: #fff;
 }
 
-#sb > div .player-options > button .material-icons {
+#sb > div .player-options  button .material-icons {
     font-size: 18px;
     line-height: 20px;
     color: #fff;
 }
 
-#sb > div .player-options > button:disabled {
+#sb > div .player-options  button:disabled {
     opacity: 0.3;
 }
 
-#sb > div .player-options > button > img {
+#sb > div .player-options  button > img {
     position: relative;
     z-index: 5;
     margin: 0 auto;
@@ -581,7 +581,7 @@ body.modal #modal {
     opacity: 0.9;
 }
 
-#sb > div .player-options > button:not(:disabled):hover > img {
+#sb > div .player-options  button:not(:disabled):hover > img {
     opacity: 1;
 }
 
@@ -670,6 +670,10 @@ body.modal #modal {
 .player-options button.outdated:after {
     display: block;
     background: #0ff;
+}
+
+.player-options > .player-swap-btns{
+    margin-left: 10px;
 }
 
 

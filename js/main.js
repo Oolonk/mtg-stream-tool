@@ -68,7 +68,6 @@ on("load", clockUpdate);
 on("scoreboardchanged", autoUpdate);
 on("scoreboardchanged", insertHighlightedCardUI);
 on("scoreboardteamschanged", changePlayerAmount);
-on("scoreboardteamschanged", insertPlayerUI);
 on("scoreboardcasterchanged", insertCasterUI);
 on("themechanged", buildFieldList);
 on("themechanged", insertScoreboardData);
@@ -322,7 +321,6 @@ async function openSettingsWindow() {
 
 function buildTeamPlayerList() {
     let playerAmount = scoreboard.players.length;
-    console.log(playerAmount);
     let tpl = document.getElementById("sb-player-tpl");
         let teamPlayerField = document.getElementById('sb-players').truncate();
         for (let i = 0; i < playerAmount; i++) {
@@ -342,6 +340,7 @@ function buildTeamPlayerList() {
             let playerPoisonElm = playerItemEl.querySelector(".sb-poison-input");
             let playerScoreElm = playerItemEl.querySelector(".sb-score-input");
             playerItemEl.dataset.player = i;
+            let playerSwapsElm = playerItemEl.querySelector(".player-swap-btns");
 
             playerNameElm.id = "playername-" + i;
             playerNameElm.value = scoreboard.players[i].player ? scoreboard.players[i].player.name : "";
@@ -355,6 +354,57 @@ function buildTeamPlayerList() {
             playerPoisonElm.value = scoreboard.players[i].poison ? scoreboard.players[i].poison : 0;
             playerScoreElm.value = scoreboard.players[i].score ? scoreboard.players[i].score : 0;
 
+            if(i >= 2){
+                let swapBtn = document.createElement("button");
+                swapBtn.classList.add("swap-btn");
+                swapBtn.classList.add("material-icons");
+                swapBtn.title = "Swap with player " + (i-1);
+                swapBtn.innerText = "north";
+                swapBtn.onclick = e => swapPlayer(i, i-2);
+                playerSwapsElm.appendChild(swapBtn);
+            }
+            // show only button when i is odd
+            if( i % 2 == 1){
+                let swapBtn = document.createElement("button");
+                swapBtn.classList.add("swap-btn");
+                swapBtn.classList.add("material-icons");
+                swapBtn.title = "Swap with player " + i;
+                swapBtn.innerText = "west";
+                swapBtn.onclick = e => swapPlayer(i, i-1);
+                playerSwapsElm.appendChild(swapBtn);
+            }
+            if( i % 2 == 0 && i < playerAmount - 1){
+                let swapBtn = document.createElement("button");
+                swapBtn.classList.add("swap-btn");
+                swapBtn.classList.add("material-icons");
+                swapBtn.title = "Swap with player " + (i+2);
+                swapBtn.innerText = "east";
+                swapBtn.onclick = e => swapPlayer(i, i+1);
+                playerSwapsElm.appendChild(swapBtn);
+            }
+            if(i < playerAmount - 2){
+                let swapBtn = document.createElement("button");
+                swapBtn.classList.add("swap-btn");
+                swapBtn.classList.add("material-icons");
+                swapBtn.title = "Swap with player " + (i+2);
+                swapBtn.innerText = "south";
+                swapBtn.onclick = e => swapPlayer(i, i+2);
+                playerSwapsElm.appendChild(swapBtn);
+            }
+
+            try {
+                let country;
+                country = APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.png';
+                if (fs.existsSync(APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.png')) {
+                    country = APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.png';
+                } else {
+                    country = APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.svg';
+                }
+                console.log(country);
+                playerItemEl.querySelector('.country').style.backgroundImage = `url('${country}')`;
+            } catch (e){
+                playerItemEl.querySelector('.country').style.backgroundImage = "";
+            }
 
             const manaColor = [
                 'w', 'u', 'b', 'r', 'g'
@@ -713,7 +763,6 @@ async function deckNameInput(e) {
     let txb = e.currentTarget;
     let parent = txb.closest("div.player-item");
     let {player} = parent.dataset;
-    console.log(player);
     if(!scoreboard.players[player].deck){
         scoreboard.players[player].deck = new Deck();
     }
@@ -951,11 +1000,6 @@ function setPlayerActive(teamNum, playerNum) {
 }
 
 function buildPlayerSeatOrder(){
-    let playerSize = scoreboard.players.length;
-    scoreboard.seatorder = [];
-            for (let i = 0; i < playerSize; i++) {
-                    scoreboard.seatorder.push(i);
-            }
     fire("scoreboardseatorderchanged");
 }
 
@@ -967,9 +1011,6 @@ function setPlayerOut(teamNum, playerNum) {
     btn.classList.toggle("out");
     scoreboard.teams[teamNum].out = [].map.call(btns, x => x.classList.contains("out"));
     fire("scoreboardchanged", true);
-}
-async function insertPlayer(){
-    scoreboard.players.forEach((po, playerNum) => insertPlayerUI(playerNum));
 }
 
 async function insertPlayerUI(playerNum) {
@@ -1124,46 +1165,7 @@ function correctDynamicProperties(data) {
     return data;
 }
 
-function toggleSeatorderGlue() {
-    document.getElementById('seatorder-glue-option').classList.toggle("enabled");
-    // buildSeatOrder();
-}
 
-function buildSeatOrder(affectedSeat) {
-    let el = document.getElementById('seatorder').truncate();
-    el.classList.toggle("visible", scoreboard.seatorder.length > 0);
-    let glueTeams = document.getElementById('seatorder-glue-option').classList.contains("enabled");
-    if (glueTeams) {
-        let first = scoreboard.seatorder[0][0];
-        if (affectedSeat != undefined) {
-            // check if affected seat is last index
-            for (let idx in scoreboard.seatorder) {
-                if (scoreboard.seatorder[idx][0] == affectedSeat[0] && scoreboard.seatorder[idx][1] == affectedSeat[1] && idx == scoreboard.seatorder.length - 1) {
-                    first = (affectedSeat[0] == 1 ? 2 : 1);
-                    break;
-                }
-            }
-        }
-        // reorder teams together
-        let teams = {1: [], 2: []};
-        scoreboard.seatorder.forEach((entry) => teams[entry[0]].push(entry));
-        scoreboard.seatorder = teams[first].concat(teams[(first == 1 ? 2 : 1)]);
-    }
-
-    scoreboard.seatorder.forEach((seat, index) => {
-        let item = document.createElement("div");
-        let po = scoreboard.players[seat];
-        item.innerText = po.player.name || ((seat + 1) + ". Player");
-        item.classList.toggle("hasname", po.player.name !== undefined && po.player.name.length > 0);
-        item.classList.add("team" + seat);
-        sortable(item, null, (indexList) => {
-            scoreboard.seatorder = indexList.map((x) => scoreboard.seatorder[x[0]]);
-            fire("scoreboardseatorderchanged", seat);
-            fire("scoreboardchanged", true);
-        });
-        el.appendChild(item);
-    });
-}
 
 async function editPlayer(arg) {
     let po, returnId, parentEl;
@@ -1619,4 +1621,11 @@ async function openStreamQueueOptions(){
             ipcRenderer.invoke('set', 'smashgg', { "tournament": windowSettings.tournamentSlug, "stream": windowSettings.streamId });
             break;
     }
+}
+function swapPlayer(playerNum1, playerNum2) {
+    let temp = scoreboard.players[playerNum1];
+    scoreboard.players[playerNum1] = scoreboard.players[playerNum2];
+    scoreboard.players[playerNum2] = temp;
+    buildTeamPlayerList();
+    fire("scoreboardchanged", true);
 }
