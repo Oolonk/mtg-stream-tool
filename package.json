@@ -1,6 +1,6 @@
 {
   "name": "mtg-stream-tool",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Magic The Gathering Stream Tool",
   "main": "app/main.js",
   "scripts": {
@@ -45,14 +45,14 @@
           "README.md",
           "scoreboard.json"
         ],
-        "executableName": "mtg-stream-tool",
+        "executableName": "MTG Stream Tool",
         "icon": "./app/logo.ico"
       },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "mtg-stream-tool",
+            "name": "MTG Stream Tool",
             "title": "MTG Stream Tool",
             "setupIcon": "./app/logo.ico",
             "loadingGif": "img/loading.gif"
