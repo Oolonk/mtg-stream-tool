@@ -2,6 +2,7 @@ const {shell, ipcMain} = require('electron');
 const fs = require('fs');
 const path = require("path");
 const emitter = new (require("events"))();
+const decklistImporter = require("../app/plugins/decklistimporter.js");
 
 const APPROOT = remote.getGlobal("APPROOT").replace(/\\/g, '/');
 const APPRES = remote.getGlobal("APPRES").replace(/\\/g, '/');
@@ -17,7 +18,6 @@ var scoreboard = {
     id: null,
     players: [],
     caster: [],
-    seatorder: [],
     matchformat: {
         type: 0,
         value: 3,
@@ -400,7 +400,6 @@ function buildTeamPlayerList() {
                 } else {
                     country = APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.svg';
                 }
-                console.log(country);
                 playerItemEl.querySelector('.country').style.backgroundImage = `url('${country}')`;
             } catch (e){
                 playerItemEl.querySelector('.country').style.backgroundImage = "";
@@ -437,7 +436,6 @@ function buildCasterList() {
     for (let casterNum = 0; casterNum < (_theme.caster || 2); casterNum++) {
         let item = createElement({"type": "div", "className": "item", "append": tpl.content.cloneNode(true)});
         let nameTbx = item.querySelector("input");
-        // let selectionElm = item.querySelector(".selection");
         let selectedIndex = -1;
 
         sortable(item, ["div.player-options", ".search"], (indexList) => {
@@ -571,7 +569,6 @@ function buildHighlightedCard() {
 
         // open caster selection by focusing the input element
         item.querySelector(".info").onclick = function (e) {
-            console.log(e.target);
             if(e.target.nodeName == "BUTTON" || e.target.parentNode.nodeName == "BUTTON"){
                 return;
             }
@@ -872,7 +869,6 @@ function setPlayerSize(size) {
         scoreboard.players.splice(size);
         // increase players to teamSize
         for (let i = scoreboard.players.length; i < size; i++) {
-            console.log(scoreboard.players[i])
             if(!scoreboard.players[i]){
                 scoreboard.players[i] = {};
             }
@@ -1042,7 +1038,6 @@ console.log(po);
     } else {
         country = APPRES + '/assets/country/' + po.country + '.svg';
     }
-    console.log(country);
     if (po.InDB) {
         db.get("team", {$or: [].concat(po.team).map(x => ({"_id": x}))}).then(entry => {
             let value = entry.map(x => x.name).join(", ");

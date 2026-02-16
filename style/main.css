@@ -584,7 +584,17 @@ body.modal #modal {
 #sb > div .player-options  button:not(:disabled):hover > img {
     opacity: 1;
 }
-
+.player-decklist{
+    position: relative;
+    margin: 0 4px;
+    padding: 0;
+    width: 20px;
+}
+.player-decklist .material-icons{
+    font-size: 18px;
+    line-height: 20px;
+    color: #fff;
+}
 #sb > div .deckname .player-ports {
     display: flex;
     margin: 0 4px;
@@ -592,6 +602,7 @@ body.modal #modal {
     border-radius: 2px;
     background: #1B629B;
 }
+
 
 #sb > div .deckname .player-ports .port {
     width: 22px;

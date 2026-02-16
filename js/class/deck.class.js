@@ -4,6 +4,10 @@ class Deck {
             params = {};
         this.name = params.name || "";
         this.colors = params.colors || [];
-        this.decklist = params.decklist || [];
+        this.decklist = params.decklist || {
+            commanders: [],
+            mainboard: [],
+            sideboard: []
+        };
     }
 }
