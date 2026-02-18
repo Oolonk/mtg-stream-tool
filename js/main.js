@@ -1624,3 +1624,101 @@ function swapPlayer(playerNum1, playerNum2) {
     buildTeamPlayerList();
     fire("scoreboardchanged", true);
 }
+
+function showModal(name) {
+    let el = document.querySelector("#modal .panel").truncate();
+    el.currentModalName = name;
+    el.appendChild(document.getElementById(name + "-modal-tpl").content.cloneNode(true));
+    el.id = name + "-modal";
+    document.body.classList.add("modal");
+    window.addEventListener("keydown", modalHotkeys, true);
+}
+
+function hideModal() {
+    let el = document.querySelector("#modal .panel");
+    window.removeEventListener("keydown", modalHotkeys, true);
+    if (el.currentModalName == "character-select") {
+        // do something here ...
+        window.removeEventListener("keydown", listenCharacterSelectKeyboard, true);
+    }
+    document.body.classList.remove("modal");
+}
+
+async function openDecklist(playerId){
+    bgWork.start("openDecklist");
+        showModal("decklist");
+        let cardList = scoreboard.players[playerId].deck.decklist;
+
+}
+
+async function openCharacterSelect(teamNum, playerNum) {
+    bgWork.start("openCharacterSelect");
+    showModal("character-select");
+    window.addEventListener("keydown", listenCharacterSelectKeyboard, true);
+    let rosterEl = document.getElementById('character-select-roster').truncate();
+    document.getElementById('character-select-personal').truncate(); // TODO: finally implement
+    let skinsEl = document.getElementById('character-select-skins').truncate();
+    let selection = scoreboard.teams[teamNum].characters[playerNum];
+    let characters = await db.get("character", {game: scoreboard.game});
+    characters = characters.map(x => new Character(x));
+
+    let path = APPRES + "/assets/character/" + scoreboard.game;
+
+    characters.push(new Character());
+
+    characters.forEach((co) => {
+        let rosterItem = createElement({"type": "div", "className": "item", "text": co.Shorten});
+        if (co.DefaultSkin) {
+            fileExists(`${path}/${co.ID}/stock/${co.DefaultSkin}.png`).then((ok) => {
+                if (!ok) {
+                    return;
+                }
+                rosterItem.innerText = "";
+                let iconEl = createElement({"type": "div", "className": "icon"});
+                iconEl.style.backgroundImage = `url('${path}/${co.ID}/stock/${co.DefaultSkin}.png')`;
+                rosterItem.appendChild(iconEl);
+            });
+        }
+        rosterItem.classList.toggle("selected", (selection && selection[0] == co.ID) || selection == null && co.ID == "");
+        rosterItem.filterTerms = [co.name.toLowerCase(), co.shorten.toLowerCase()];
+
+        let showSkins = e => {
+            if (co.SkinCount <= 1) {
+                setCharacter(teamNum, playerNum, co.ID, co.DefaultSkin);
+                return hideModal();
+            }
+
+            skinsEl.truncate();
+            co.skins.forEach((skin, index) => {
+                let skinItem = createElement({"type": "div", "className": "item", "text": skin});
+                fileExists(`${path}/${co.ID}/stock/${skin}.png`).then((ok) => {
+                    if (!ok) {
+                        return;
+                    }
+                    skinItem.innerText = "";
+                    let iconEl = createElement({"type": "div", "className": "icon"});
+                    iconEl.style.backgroundImage = `url('${path}/${co.ID}/stock/${skin}.png')`;
+                    skinItem.appendChild(iconEl);
+                });
+                skinItem.classList.toggle("selected", selection && selection[0] == co.ID && selection[1] == index);
+                skinItem.onclick = e => {
+                    setCharacter(teamNum, playerNum, co.ID, index);
+                    hideModal();
+                };
+                skinsEl.appendChild(skinItem);
+            });
+        };
+
+        if (selection && selection[0] == co.ID && co.SkinCount > 2) {
+            showSkins();
+        }
+        rosterItem.onclick = showSkins;
+        rosterEl.appendChild(rosterItem);
+    });
+    bgWork.finish("openCharacterSelect");
+}
+function modalHotkeys(e) {
+    if (e.keyCode == 27) {
+        hideModal();
+    }
+}
