@@ -229,8 +229,8 @@
     <div class="next" onclick="smashggApplyNextSet()"></div>
 </div>
 
-<div id="modal" onclick="hideModal();">
-    <div class="close" onclick="hideModal()"></div>
+<div id="modal" onclick="">
+<!--    <div class="close" onclick="hideModal()"></div>-->
     <div class="panel" onclick="event.stopPropagation();"></div>
 </div>
 <template id="decklist-modal-tpl">
@@ -249,20 +249,44 @@
     <summary>Commanders</summary>
         <div id="decklist-commanders">
             <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info">Add Card</button>
         </div>
     </details>
     <details open>
         <summary>Mainboard</summary>
         <div id="decklist-mainboard">
             <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info"> Add Card</button>
         </div>
     </details>
     <details open>
         <summary>Sideboard</summary>
         <div id="decklist-sideboard">
             <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info">Add Card</button>
         </div>
     </details>
+    <div class="modal-bottom">
+        <button onclick="hideModal(true)">Save</button>
+        <button onclick="hideModal(false)">Cancel</button>
+    </div>
+</template>
+<template id="decklist-card-tpl">
+    <button onclick="deleteCardFromList(this)" class="delete red"><span class="material-icons">close</span></button>
+    <input type="number" value="#QUANTITY#" min="1" step="1" class="card-amount"/>
+    <span>#NAME#</span>
 </template>
 </body>
 

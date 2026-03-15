@@ -56,16 +56,16 @@ async function importFromArchidekt(url) {
         && !card.categories.includes('Commander') && !card.categories.includes('Tokens & Extras')
     );
     var cardList = {
-        commander: [],
+        commanders: [],
         mainboard: [],
         sideboard: [],
     }
 
     for (const card of commander) {
         try {
-            const i = cardList.commander.findIndex(e => e.id === card.card.oracleCard.uid);
+            const i = cardList.commanders.findIndex(e => e.id === card.card.oracleCard.uid);
             if (i > -1) {
-                cardList.commander[i].quantity += card.quantity;
+                cardList.commanders[i].quantity += card.quantity;
             } else {
                 let cardDB = null;
                 try {
@@ -79,7 +79,7 @@ async function importFromArchidekt(url) {
                     // ignore lookup errors, proceed without card details
                     cardDB = null;
                 }
-                cardList.commander.push({
+                cardList.commanders.push({
                     id: card.card.oracleCard.uid,
                     quantity: card.quantity,
                     card: cardDB
@@ -100,11 +100,13 @@ async function importFromArchidekt(url) {
                 let cardDB = null;
                 try {
                     cardDB = await dbFindOne({ _id: card.card.oracleCard.uid });
-                    cardDB.colors.forEach(color => {
-                        if(!colors.includes(color.toLowerCase())){
-                            colors.push(color.toLowerCase());
-                        }
-                    });
+                    if(cardDB.colors) {
+                        cardDB.colors.forEach(color => {
+                            if (!colors.includes(color.toLowerCase())) {
+                                colors.push(color.toLowerCase());
+                            }
+                        });
+                    }
                 } catch (err) {
                     cardDB = null;
                 }
@@ -128,12 +130,15 @@ async function importFromArchidekt(url) {
                 let cardDB = null;
                 try {
                     cardDB = await dbFindOne({ _id: card.card.oracleCard.uid });
-                    cardDB.colors.forEach(color => {
-                        if(!colors.includes(color.toLowerCase())){
-                            colors.push(color.toLowerCase());
-                        }
-                    });
+                    if(cardDB.colors) {
+                        cardDB.colors.forEach(color => {
+                            if (!colors.includes(color.toLowerCase())) {
+                                colors.push(color.toLowerCase());
+                            }
+                        });
+                    }
                 } catch (err) {
+                    console.error('Error processing sideboard card', err);
                     cardDB = null;
                 }
                 cardList.mainboard.push({
@@ -169,7 +174,7 @@ async function importFromMoxfield(url) {
     var deckname = json.name;
     var boards =  await json.boards;
     var cardList = {
-        commander: [],
+        commanders: [],
         mainboard: [],
         sideboard: [],
     }
@@ -182,9 +187,9 @@ async function importFromMoxfield(url) {
                 if(oracleId == null){
                     continue;
                 }
-                const i = cardList.commander.findIndex(e => e.id === oracleId);
+                const i = cardList.commanders.findIndex(e => e.id === oracleId);
                 if (i > -1) {
-                    cardList.commander[i].quantity += card.quantity;
+                    cardList.commanders[i].quantity += card.quantity;
                 } else {
                     let cardDB = null;
                     try {
@@ -192,7 +197,7 @@ async function importFromMoxfield(url) {
                     } catch (err) {
                         cardDB = null;
                     }
-                    cardList.commander.push({
+                    cardList.commanders.push({
                         id: oracleId,
                         quantity: card.quantity,
                         card: cardDB,
@@ -312,8 +317,123 @@ async function getOracleIdById(id) {
     }catch(e){}
     return null;
 }
+
+async function saveDecklist(list){
+    if(db == null){
+        db = new nedb({
+            filename: path.join(APPRES, 'db', 'card'),
+            autoload: true
+        });
+    }
+    var colors = [];
+    var cardList = {
+        commanders: [],
+        mainboard: [],
+        sideboard: [],
+    }
+
+
+    for (const card of list.commanders) {
+        try {
+            const i = cardList.commanders.findIndex(e => e.id === card.id);
+            if (i > -1) {
+                cardList.commanders[i].quantity += card.quantity;
+            } else {
+                let cardDB = null;
+                try {
+                    cardDB = await dbFindOne({ _id: card.id });
+                    cardDB.color_identity.forEach(color => {
+                        if(!colors.includes(color.toLowerCase())){
+                            colors.push(color.toLowerCase());
+                        }
+                    });
+                } catch (err) {
+                    // ignore lookup errors, proceed without card details
+                    cardDB = null;
+                }
+                cardList.commanders.push({
+                    id: card.id,
+                    quantity: card.quantity,
+                    card: cardDB
+                });
+            }
+        } catch (err) {
+            // catch per-card errors so one bad card doesn't break the whole import
+            console.error('Error processing commander card', err);
+        }
+    }
+
+    for (const card of list.sideboard) {
+        try {
+            const i = cardList.sideboard.findIndex(e => e.id === card.id);
+            if (i > -1) {
+                cardList.sideboard[i].quantity += card.quantity;
+            } else {
+                let cardDB = null;
+                try {
+                    cardDB = await dbFindOne({ _id: card.id });
+                    if(cardDB.colors) {
+                        cardDB.colors.forEach(color => {
+                            if (!colors.includes(color.toLowerCase())) {
+                                colors.push(color.toLowerCase());
+                            }
+                        });
+                    }
+                } catch (err) {
+                    cardDB = null;
+                }
+                cardList.sideboard.push({
+                    id: card.id,
+                    quantity: card.quantity,
+                    card: cardDB,
+                });
+            }
+        } catch (err) {
+            console.error('Error processing sideboard card', err);
+        }
+    }
+
+    for (const card of list.mainboard) {
+        try {
+            const i = cardList.mainboard.findIndex(e => e.id === card.id);
+            if (i > -1) {
+                cardList.mainboard[i].quantity += card.quantity;
+            } else {
+                let cardDB = null;
+                try {
+                    cardDB = await dbFindOne({ _id: card.id });
+                    if(cardDB.colors) {
+                        cardDB.colors.forEach(color => {
+                            if (!colors.includes(color.toLowerCase())) {
+                                colors.push(color.toLowerCase());
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error processing sideboard card', err);
+                    cardDB = null;
+                }
+                cardList.mainboard.push({
+                    id: card.id,
+                    quantity: card.quantity,
+                    card: cardDB,
+                });
+            }
+        } catch (err) {
+            console.error('Error processing mainboard card', err);
+        }
+    }
+    for(const board in cardList){
+        for(const id in cardList[board]){
+            delete cardList[board][id].id;
+        }
+    }
+    cardList.colors = colors;
+    return cardList;
+}
 module.exports = {
-    importDeckList: importDeckList
+    importDeckList: importDeckList,
+    saveDecklist: saveDecklist
 }
 
 const COLORS = {

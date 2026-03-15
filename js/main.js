@@ -1629,22 +1629,28 @@ function swapPlayer(playerNum1, playerNum2) {
     fire("scoreboardchanged", true);
 }
 
-function showModal(name) {
+async function showModal(name) {
     let el = document.querySelector("#modal .panel").truncate();
     el.currentModalName = name;
     el.appendChild(document.getElementById(name + "-modal-tpl").content.cloneNode(true));
     el.id = name + "-modal";
     document.body.classList.add("modal");
     window.addEventListener("keydown", modalHotkeys, true);
+    switch (name) {
+        case "decklist":
+            break;
+        default:
+            document.getElementById("modal").onclick = hideModal;
+    }
 }
 
-function hideModal(save = true) {
+async function hideModal(save = true) {
     let el = document.querySelector("#modal .panel");
     window.removeEventListener("keydown", modalHotkeys, true);
     switch (el.currentModalName) {
         case "decklist":
             if(save){
-
+                saveDecklist(document.querySelector("#decklist-player-id").value, el);
             }
         break;
     }
@@ -1652,7 +1658,6 @@ function hideModal(save = true) {
 }
 
 async function openDecklist(playerId){
-    console.log(playerId);
     bgWork.start("openDecklist");
         showModal("decklist");
         let cardList = scoreboard.players[playerId].deck.decklist;
@@ -1661,16 +1666,144 @@ async function openDecklist(playerId){
         let importButton = modalEl.querySelector("#decklist-import-button");
         let commandersListEl = modalEl.querySelector("#decklist-commanders").getElementsByClassName("list")[0];
         let mainboardListEl = modalEl.querySelector("#decklist-mainboard").getElementsByClassName("list")[0];
-        let sideboardLisEl = modalEl.querySelector("#decklist-sideboard").getElementsByClassName("list")[0];
+        let sideboardListEl = modalEl.querySelector("#decklist-sideboard").getElementsByClassName("list")[0];
+        let nameTbx = modalEl.querySelectorAll(".search input");
+        scoreboard.players[playerId].deck.decklist.commanders.forEach((c) => {
+            addCardinDecklist(commandersListEl, c);
+        });
+        scoreboard.players[playerId].deck.decklist.mainboard.forEach((c) => {
+            addCardinDecklist(mainboardListEl, c);
+        });
+        scoreboard.players[playerId].deck.decklist.sideboard.forEach((c) => {
+            addCardinDecklist(sideboardListEl, c);
+        });
         importButton.onclick = async () => {
             let url = modalEl.querySelector("#decklist-import-url").value;
             let importName = modalEl.querySelector("#decklist-import-name").checked;
             let importColors = modalEl.querySelector("#decklist-import-colors").checked;
             importDeckList(playerId, url, importName, importColors);
         }
+        console.log(modalEl.querySelectorAll(".info"));
+        modalEl.querySelectorAll(".info").forEach(elem => {
+            elem.onclick = function (e) {
+                console.log(e);
+                let el = e.currentTarget.parentNode;
+                console.log(el);
+                let tbx = el.querySelector(".search input");
+                el.querySelector(".search").classList.add("visible");
+                tbx.value = '';
+                tbx.focus();
+                tbx.select();
+                e.stopPropagation();
+            }
+        })
+
+        nameTxbInput = e => {
+            let value = e.target.value.trim().toLowerCase();
+            let input = e.currentTarget;
+            let selectionElm = e.target.parentNode.querySelector(".selection");
+            db.get("card", {"name": {$regex: new RegExp(`${RegExp.escape(value)}`, 'i')}}, {limit: 20, sort: {"name": 1}}).then((list) => {
+                selectionElm.truncate();
+                selectedIndex = -1;
+
+                list.forEach((card, index) => {
+                    // build caster select items
+                    let item = document.createElement("div");
+                    item.classList.add("item");
+                    item.appendChild(createElement({"type": "div", "className": "name", "text": card.name}));
+                    if (e.type == "input" && (e.target.value == card.name || list.length == 1)) {
+                        selectedIndex = index;
+                    }
+                    item.classList.toggle("highlighted", selectedIndex == index);
+
+                    item.onclick = e => { // caster select item clicked
+                        input.blur();
+                        console.log(card);
+                        console.log(e.target.parentNode.parentNode.parentNode.parentNode);
+                        addCardinDecklist(e.target.parentNode.parentNode.parentNode.parentNode.getElementsByClassName("list")[0], {card: card, quantity: 1});
+                    };
+                    item.onmousedown = e => e.preventDefault();
+                    selectionElm.appendChild(item);
+                });
+
+            });
+        };
+
+        nameTbx.forEach(e => {
+            e.oninput = nameTxbInput;
+            e.onfocus = nameTxbInput;
+            e.onblur = () => modalEl.querySelectorAll(".search").forEach(e => {
+                e.classList.remove("visible");
+            });
+        });
+
 
     bgWork.finish("openDecklist");
 
+}
+async function saveDecklist(playerId, modalEl){
+    bgWork.start("saveDecklist");
+    importColors = modalEl.querySelector("#decklist-import-colors").checked;
+    let list = {
+        commanders: [],
+        mainboard: [],
+        sideboard: []
+    }
+    modalEl.querySelectorAll("#decklist-commanders .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.commanders.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    modalEl.querySelectorAll("#decklist-mainboard .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.mainboard.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    modalEl.querySelectorAll("#decklist-sideboard .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.sideboard.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    let decklist = await decklistImporter.saveDecklist(list);
+    if(importColors && decklist.colors){
+        await setPlayerColors(playerId, decklist.colors);
+    }
+    if(decklist.mainboard) {
+        scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
+    } else{
+        scoreboard.players[playerId].deck.decklist.mainboard = [];
+    }
+    if(decklist.sideboard) {
+        scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
+    } else{
+        scoreboard.players[playerId].deck.decklist.sideboard = [];
+    }
+    if(decklist.commanders) {
+        scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+    } else{
+        scoreboard.players[playerId].deck.decklist.commanders = [];
+    }
+    fire("scoreboardchanged", true);
+    bgWork.finish("saveDecklist");
+
+}
+async function addCardinDecklist(list, card){
+    let tpl = document.getElementById('decklist-card-tpl');
+    let child = createElement({"type": "div", "className": "card", "append": tpl.content.cloneNode(true)});
+    child = list.appendChild(child);
+    child.dataset.id = card.card._id;
+    child.innerHTML = child.innerHTML.replace(/#NAME#/g, card.card.name);
+    child.innerHTML = child.innerHTML.replace(/#QUANTITY#/g, card.quantity);
+    child.innerHTML = child.innerHTML.replace(/#ID#/g, card.card._id);
 }
 async function importDeckList(playerId, url, importName = false, importColors = false) {
     bgWork.start("importDeckList");
@@ -1684,10 +1817,24 @@ async function importDeckList(playerId, url, importName = false, importColors = 
         if(importColors && decklist.colors){
             await setPlayerColors(playerId, decklist.colors);
         }
-        scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
-        scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
-        scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+        if(decklist.mainboard) {
+            scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
+        } else{
+            scoreboard.players[playerId].deck.decklist.mainboard = [];
+        }
+        if(decklist.sideboard) {
+            scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
+        } else{
+            scoreboard.players[playerId].deck.decklist.sideboard = [];
+        }
+        if(decklist.commanders) {
+            scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+        } else{
+            scoreboard.players[playerId].deck.decklist.commanders = [];
+        }
         fire("scoreboardchanged", true);
+    }else{
+
     }
     bgWork.finish("importDeckList");
 }
@@ -1699,83 +1846,21 @@ async function setPlayerColors(playerId, colors = []) {
         colorsAvailable.forEach(color => {
             let btn = document.getElementById("colorbtn-" + color + "-" + playerId);
             if(scoreboard.players[playerId].deck.colors.includes(color)){
-
                 btn.classList.add("checked");
             }else{
-                btn .classList.remove("checked");
+                btn.classList.remove("checked");
             }
         })
         fire("scoreboardchanged", true);
 }
 
-async function openCharacterSelect(teamNum, playerNum) {
-    bgWork.start("openCharacterSelect");
-    showModal("character-select");
-    window.addEventListener("keydown", listenCharacterSelectKeyboard, true);
-    let rosterEl = document.getElementById('character-select-roster').truncate();
-    document.getElementById('character-select-personal').truncate(); // TODO: finally implement
-    let skinsEl = document.getElementById('character-select-skins').truncate();
-    let selection = scoreboard.teams[teamNum].characters[playerNum];
-    let characters = await db.get("character", {game: scoreboard.game});
-    characters = characters.map(x => new Character(x));
-
-    let path = APPRES + "/assets/character/" + scoreboard.game;
-
-    characters.push(new Character());
-
-    characters.forEach((co) => {
-        let rosterItem = createElement({"type": "div", "className": "item", "text": co.Shorten});
-        if (co.DefaultSkin) {
-            fileExists(`${path}/${co.ID}/stock/${co.DefaultSkin}.png`).then((ok) => {
-                if (!ok) {
-                    return;
-                }
-                rosterItem.innerText = "";
-                let iconEl = createElement({"type": "div", "className": "icon"});
-                iconEl.style.backgroundImage = `url('${path}/${co.ID}/stock/${co.DefaultSkin}.png')`;
-                rosterItem.appendChild(iconEl);
-            });
-        }
-        rosterItem.classList.toggle("selected", (selection && selection[0] == co.ID) || selection == null && co.ID == "");
-        rosterItem.filterTerms = [co.name.toLowerCase(), co.shorten.toLowerCase()];
-
-        let showSkins = e => {
-            if (co.SkinCount <= 1) {
-                setCharacter(teamNum, playerNum, co.ID, co.DefaultSkin);
-                return hideModal();
-            }
-
-            skinsEl.truncate();
-            co.skins.forEach((skin, index) => {
-                let skinItem = createElement({"type": "div", "className": "item", "text": skin});
-                fileExists(`${path}/${co.ID}/stock/${skin}.png`).then((ok) => {
-                    if (!ok) {
-                        return;
-                    }
-                    skinItem.innerText = "";
-                    let iconEl = createElement({"type": "div", "className": "icon"});
-                    iconEl.style.backgroundImage = `url('${path}/${co.ID}/stock/${skin}.png')`;
-                    skinItem.appendChild(iconEl);
-                });
-                skinItem.classList.toggle("selected", selection && selection[0] == co.ID && selection[1] == index);
-                skinItem.onclick = e => {
-                    setCharacter(teamNum, playerNum, co.ID, index);
-                    hideModal();
-                };
-                skinsEl.appendChild(skinItem);
-            });
-        };
-
-        if (selection && selection[0] == co.ID && co.SkinCount > 2) {
-            showSkins();
-        }
-        rosterItem.onclick = showSkins;
-        rosterEl.appendChild(rosterItem);
-    });
-    bgWork.finish("openCharacterSelect");
+function deleteCardFromList(el){
+    let element = el.parentElement;
+    element.remove();
 }
+
 function modalHotkeys(e) {
-    if (e.keyCode == 27) {
-        hideModal();
-    }
+    // if (e.keyCode == 27) {
+    //     hideModal();
+    // }
 }

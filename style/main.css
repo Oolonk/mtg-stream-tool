@@ -1741,6 +1741,147 @@ body:not(.fixedStreamQueue) #stream-queue:hover .list {
     border-radius: 3px;
     display: flex;
     flex-direction: column;
-    padding: 15px;
-    overflow: scroll;
+    padding: 15px !important;
+    overflow-y: scroll;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+#modal .modal-top {
+    top: 0;
+    position: sticky;
+    width: 100%;
+    height: 25px;
+    background-color: black;
+}
+#modal .modal-bottom {
+    bottom: 0;
+    position: sticky;
+    width: 100%;
+    height: 25px;
+    background-color: black;
+}
+
+
+
+#decklist-modal .search {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 55px;
+    padding: 3px;
+    z-index: 20;
+    background: #000;
+    box-shadow: 2px 2px 11px rgba(var(--backgroundRGB), 0.5);
+    color: white;
+}
+
+#decklist-modal .search:after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: calc(50% - 10px);
+    border: 10px solid transparent;
+    border-bottom-color: #000;
+}
+
+#decklist-modal .search.visible {
+    display: block;
+}
+
+#decklist-modal .search input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    border-radius: 0;
+}
+
+#decklist-modal .selection {
+    background: #012;
+    transition: all 150ms;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#decklist-modal .selection > .item {
+    position: relative;
+    height: 40px;
+    cursor: pointer;
+}
+
+#decklist-modal .selection > .item:nth-child(even) {
+    background: rgba(var(--backgroundRGB), 0.2);
+}
+
+#decklist-modal .selection > .item:hover {
+    background: rgba(0, 40, 70, 0.5);
+}
+
+#decklist-modal.selection > .item.tmp {
+    background: rgba(150, 140, 20, 0.5);
+}
+
+#decklist-modal .selection > .item.tmp:after {
+    content: 'temporary entry - unsaved';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    font-size: 8px;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+#decklist-modal .selection > .item.clear {
+    background: rgba(150, 40, 20, 0.5);
+    padding: 5px 0;
+    height: auto;
+}
+
+#decklist-modal .selection > .item.clear:before {
+    content: ' - NONE - ';
+    display: block;
+    font-style: italic;
+    font-size: 14px;
+    text-align: Center;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+#decklist-modal .selection > .item.clear:hover {
+    background: rgba(150, 40, 20, 0.8);
+}
+
+
+#decklist-modal .selection > .item.highlighted:after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    border: 1px solid #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+
+#decklist-modal .selection > .item .name {
+    position: absolute;
+    left: 5px;
+    top: 10px;
+}
+
+#decklist-modal .selection > .item .team {
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    font-size: 8px;
+    opacity: 0.7;
+}
+
+#decklist-modal .selection > .item img {
+    position: absolute;
+    right: 5px;
+    top: 10px;
+    height: 20px;
 }
