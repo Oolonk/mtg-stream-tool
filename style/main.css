@@ -1733,3 +1733,14 @@ body:not(.fixedStreamQueue) #stream-queue:hover .list {
     background: #fff;
     color: #000;
 }
+
+#decklist-modal {
+    width: 90%;
+    max-width: 800px;
+    max-height: 400px;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    overflow: scroll;
+}

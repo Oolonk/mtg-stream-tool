@@ -71,8 +71,8 @@ async function importFromArchidekt(url) {
                 try {
                     cardDB = await dbFindOne({ _id: card.card.oracleCard.uid });
                     cardDB.color_identity.forEach(color => {
-                        if(!colors.includes(color)){
-                            colors.push(color);
+                        if(!colors.includes(color.toLowerCase())){
+                            colors.push(color.toLowerCase());
                         }
                     });
                 } catch (err) {
@@ -101,8 +101,8 @@ async function importFromArchidekt(url) {
                 try {
                     cardDB = await dbFindOne({ _id: card.card.oracleCard.uid });
                     cardDB.colors.forEach(color => {
-                        if(!colors.includes(color)){
-                            colors.push(color);
+                        if(!colors.includes(color.toLowerCase())){
+                            colors.push(color.toLowerCase());
                         }
                     });
                 } catch (err) {
@@ -129,8 +129,8 @@ async function importFromArchidekt(url) {
                 try {
                     cardDB = await dbFindOne({ _id: card.card.oracleCard.uid });
                     cardDB.colors.forEach(color => {
-                        if(!colors.includes(color)){
-                            colors.push(color);
+                        if(!colors.includes(color.toLowerCase())){
+                            colors.push(color.toLowerCase());
                         }
                     });
                 } catch (err) {

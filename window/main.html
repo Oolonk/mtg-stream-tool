@@ -233,6 +233,37 @@
     <div class="close" onclick="hideModal()"></div>
     <div class="panel" onclick="event.stopPropagation();"></div>
 </div>
+<template id="decklist-modal-tpl">
+    <input type="hidden" id="decklist-player-id" value=""/>
+    <div class="modal-top">
+        <input type="url" id="decklist-import-url" placeholder="Decklist URL"/>
+        <input type="checkbox" id="decklist-import-name">
+        <label for="decklist-import-name">Import Name</label>
+        <input type="checkbox" id="decklist-import-colors">
+        <label for="decklist-import-colors">Import Colors</label>
+        <button id="decklist-import-button">
+            <span class="material-icons">file_download</span> Import Decklist
+            </button>
+    </div>
+    <details open>
+    <summary>Commanders</summary>
+        <div id="decklist-commanders">
+            <div class="list"></div>
+        </div>
+    </details>
+    <details open>
+        <summary>Mainboard</summary>
+        <div id="decklist-mainboard">
+            <div class="list"></div>
+        </div>
+    </details>
+    <details open>
+        <summary>Sideboard</summary>
+        <div id="decklist-sideboard">
+            <div class="list"></div>
+        </div>
+    </details>
+</template>
 </body>
 
 </html>

@@ -341,6 +341,7 @@ function buildTeamPlayerList() {
             let playerScoreElm = playerItemEl.querySelector(".sb-score-input");
             playerItemEl.dataset.player = i;
             let playerSwapsElm = playerItemEl.querySelector(".player-swap-btns");
+            let playerDecklistBtn = playerItemEl.querySelector(".player-decklist");
 
             playerNameElm.id = "playername-" + i;
             playerNameElm.value = scoreboard.players[i].player ? scoreboard.players[i].player.name : "";
@@ -353,6 +354,9 @@ function buildTeamPlayerList() {
             playerLifeElm.value = scoreboard.players[i].life ? scoreboard.players[i].life : startingLife;
             playerPoisonElm.value = scoreboard.players[i].poison ? scoreboard.players[i].poison : 0;
             playerScoreElm.value = scoreboard.players[i].score ? scoreboard.players[i].score : 0;
+            playerDecklistBtn.onclick = e => {
+                openDecklist(i);
+            };
 
             if(i >= 2){
                 let swapBtn = document.createElement("button");
@@ -1634,21 +1638,74 @@ function showModal(name) {
     window.addEventListener("keydown", modalHotkeys, true);
 }
 
-function hideModal() {
+function hideModal(save = true) {
     let el = document.querySelector("#modal .panel");
     window.removeEventListener("keydown", modalHotkeys, true);
-    if (el.currentModalName == "character-select") {
-        // do something here ...
-        window.removeEventListener("keydown", listenCharacterSelectKeyboard, true);
+    switch (el.currentModalName) {
+        case "decklist":
+            if(save){
+
+            }
+        break;
     }
     document.body.classList.remove("modal");
 }
 
 async function openDecklist(playerId){
+    console.log(playerId);
     bgWork.start("openDecklist");
         showModal("decklist");
         let cardList = scoreboard.players[playerId].deck.decklist;
+        let modalEl = document.querySelector("#modal");
+        modalEl.querySelector("#decklist-player-id").value = playerId;
+        let importButton = modalEl.querySelector("#decklist-import-button");
+        let commandersListEl = modalEl.querySelector("#decklist-commanders").getElementsByClassName("list")[0];
+        let mainboardListEl = modalEl.querySelector("#decklist-mainboard").getElementsByClassName("list")[0];
+        let sideboardLisEl = modalEl.querySelector("#decklist-sideboard").getElementsByClassName("list")[0];
+        importButton.onclick = async () => {
+            let url = modalEl.querySelector("#decklist-import-url").value;
+            let importName = modalEl.querySelector("#decklist-import-name").checked;
+            let importColors = modalEl.querySelector("#decklist-import-colors").checked;
+            importDeckList(playerId, url, importName, importColors);
+        }
 
+    bgWork.finish("openDecklist");
+
+}
+async function importDeckList(playerId, url, importName = false, importColors = false) {
+    bgWork.start("importDeckList");
+    let decklist = await decklistImporter.importDeckList(url);
+    if(await decklist != null){
+        hideModal(false);
+        if(importName && decklist.deckname){
+            document.getElementById("deckname"+playerId).value = decklist.deckname;
+            document.getElementById("deckname"+playerId).dispatchEvent(new Event('input'));
+        }
+        if(importColors && decklist.colors){
+            await setPlayerColors(playerId, decklist.colors);
+        }
+        scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
+        scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
+        scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+        fire("scoreboardchanged", true);
+    }
+    bgWork.finish("importDeckList");
+}
+async function setPlayerColors(playerId, colors = []) {
+        const colorsAvailable = ["w", "u", "b", "r", "g"];
+        if(typeof scoreboard.players[playerId].deck.colors == "undefined"){
+            scoreboard.players[playerId].deck.colors = [];}
+        scoreboard.players[playerId].deck.colors = colors;
+        colorsAvailable.forEach(color => {
+            let btn = document.getElementById("colorbtn-" + color + "-" + playerId);
+            if(scoreboard.players[playerId].deck.colors.includes(color)){
+
+                btn.classList.add("checked");
+            }else{
+                btn .classList.remove("checked");
+            }
+        })
+        fire("scoreboardchanged", true);
 }
 
 async function openCharacterSelect(teamNum, playerNum) {
