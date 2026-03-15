@@ -96,6 +96,7 @@
                 <input type="text" value="" list="playernames" class="playername" placeholder="Playername"/>
             </div>
             <div class="deckname">
+                <button class="player-decklist" title="Decklist"><span class="material-icons">list</span></button>
                 <input type="text" value="" class="deckname" placeholder="Deckname"/>
                 <div class="player-ports"></div>
             </div>
@@ -228,10 +229,65 @@
     <div class="next" onclick="smashggApplyNextSet()"></div>
 </div>
 
-<div id="modal" onclick="hideModal();">
-    <div class="close" onclick="hideModal()"></div>
+<div id="modal" onclick="">
+<!--    <div class="close" onclick="hideModal()"></div>-->
     <div class="panel" onclick="event.stopPropagation();"></div>
 </div>
+<template id="decklist-modal-tpl">
+    <input type="hidden" id="decklist-player-id" value=""/>
+    <div class="modal-top">
+        <input type="url" id="decklist-import-url" placeholder="Decklist URL"/>
+        <input type="checkbox" id="decklist-import-name">
+        <label for="decklist-import-name">Import Name</label>
+        <input type="checkbox" id="decklist-import-colors">
+        <label for="decklist-import-colors">Import Colors</label>
+        <button id="decklist-import-button">
+            <span class="material-icons">file_download</span> Import Decklist
+            </button>
+    </div>
+    <details open>
+    <summary>Commanders</summary>
+        <div id="decklist-commanders">
+            <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info">Add Card</button>
+        </div>
+    </details>
+    <details open>
+        <summary>Mainboard</summary>
+        <div id="decklist-mainboard">
+            <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info"> Add Card</button>
+        </div>
+    </details>
+    <details open>
+        <summary>Sideboard</summary>
+        <div id="decklist-sideboard">
+            <div class="list"></div>
+            <div class="search">
+                <input type="text" value=""/>
+                <div class="selection"></div>
+            </div>
+            <button class="info">Add Card</button>
+        </div>
+    </details>
+    <div class="modal-bottom">
+        <button onclick="hideModal(true)">Save</button>
+        <button onclick="hideModal(false)">Cancel</button>
+    </div>
+</template>
+<template id="decklist-card-tpl">
+    <button onclick="deleteCardFromList(this)" class="delete red"><span class="material-icons">close</span></button>
+    <input type="number" value="#QUANTITY#" min="1" step="1" class="card-amount"/>
+    <span>#NAME#</span>
+</template>
 </body>
 
 </html>

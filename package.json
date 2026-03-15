@@ -1,6 +1,7 @@
 {
   "name": "mtg-stream-tool",
-  "version": "0.0.2",
+  "productName": "MTG Stream Tool",
+  "version": "0.0.3",
   "description": "A Magic The Gathering Stream Tool",
   "main": "app/main.js",
   "scripts": {
@@ -54,6 +55,7 @@
           "config": {
             "name": "mtg-stream-tool",
             "title": "MTG Stream Tool",
+            "productName": "MTG Stream Tool",
             "setupIcon": "./app/logo.ico",
             "loadingGif": "img/loading.gif"
           }

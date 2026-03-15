@@ -2,6 +2,7 @@ const {shell, ipcMain} = require('electron');
 const fs = require('fs');
 const path = require("path");
 const emitter = new (require("events"))();
+const decklistImporter = require("../app/plugins/decklistimporter.js");
 
 const APPROOT = remote.getGlobal("APPROOT").replace(/\\/g, '/');
 const APPRES = remote.getGlobal("APPRES").replace(/\\/g, '/');
@@ -17,7 +18,6 @@ var scoreboard = {
     id: null,
     players: [],
     caster: [],
-    seatorder: [],
     matchformat: {
         type: 0,
         value: 3,
@@ -341,6 +341,7 @@ function buildTeamPlayerList() {
             let playerScoreElm = playerItemEl.querySelector(".sb-score-input");
             playerItemEl.dataset.player = i;
             let playerSwapsElm = playerItemEl.querySelector(".player-swap-btns");
+            let playerDecklistBtn = playerItemEl.querySelector(".player-decklist");
 
             playerNameElm.id = "playername-" + i;
             playerNameElm.value = scoreboard.players[i].player ? scoreboard.players[i].player.name : "";
@@ -353,6 +354,9 @@ function buildTeamPlayerList() {
             playerLifeElm.value = scoreboard.players[i].life ? scoreboard.players[i].life : startingLife;
             playerPoisonElm.value = scoreboard.players[i].poison ? scoreboard.players[i].poison : 0;
             playerScoreElm.value = scoreboard.players[i].score ? scoreboard.players[i].score : 0;
+            playerDecklistBtn.onclick = e => {
+                openDecklist(i);
+            };
 
             if(i >= 2){
                 let swapBtn = document.createElement("button");
@@ -400,7 +404,6 @@ function buildTeamPlayerList() {
                 } else {
                     country = APPRES + '/assets/country/' + scoreboard.players[i].player.country + '.svg';
                 }
-                console.log(country);
                 playerItemEl.querySelector('.country').style.backgroundImage = `url('${country}')`;
             } catch (e){
                 playerItemEl.querySelector('.country').style.backgroundImage = "";
@@ -437,7 +440,6 @@ function buildCasterList() {
     for (let casterNum = 0; casterNum < (_theme.caster || 2); casterNum++) {
         let item = createElement({"type": "div", "className": "item", "append": tpl.content.cloneNode(true)});
         let nameTbx = item.querySelector("input");
-        // let selectionElm = item.querySelector(".selection");
         let selectedIndex = -1;
 
         sortable(item, ["div.player-options", ".search"], (indexList) => {
@@ -571,7 +573,6 @@ function buildHighlightedCard() {
 
         // open caster selection by focusing the input element
         item.querySelector(".info").onclick = function (e) {
-            console.log(e.target);
             if(e.target.nodeName == "BUTTON" || e.target.parentNode.nodeName == "BUTTON"){
                 return;
             }
@@ -872,7 +873,6 @@ function setPlayerSize(size) {
         scoreboard.players.splice(size);
         // increase players to teamSize
         for (let i = scoreboard.players.length; i < size; i++) {
-            console.log(scoreboard.players[i])
             if(!scoreboard.players[i]){
                 scoreboard.players[i] = {};
             }
@@ -1042,7 +1042,6 @@ console.log(po);
     } else {
         country = APPRES + '/assets/country/' + po.country + '.svg';
     }
-    console.log(country);
     if (po.InDB) {
         db.get("team", {$or: [].concat(po.team).map(x => ({"_id": x}))}).then(entry => {
             let value = entry.map(x => x.name).join(", ");
@@ -1628,4 +1627,240 @@ function swapPlayer(playerNum1, playerNum2) {
     scoreboard.players[playerNum2] = temp;
     buildTeamPlayerList();
     fire("scoreboardchanged", true);
+}
+
+async function showModal(name) {
+    let el = document.querySelector("#modal .panel").truncate();
+    el.currentModalName = name;
+    el.appendChild(document.getElementById(name + "-modal-tpl").content.cloneNode(true));
+    el.id = name + "-modal";
+    document.body.classList.add("modal");
+    window.addEventListener("keydown", modalHotkeys, true);
+    switch (name) {
+        case "decklist":
+            break;
+        default:
+            document.getElementById("modal").onclick = hideModal;
+    }
+}
+
+async function hideModal(save = true) {
+    let el = document.querySelector("#modal .panel");
+    window.removeEventListener("keydown", modalHotkeys, true);
+    switch (el.currentModalName) {
+        case "decklist":
+            if(save){
+                saveDecklist(document.querySelector("#decklist-player-id").value, el);
+            }
+        break;
+    }
+    document.body.classList.remove("modal");
+}
+
+async function openDecklist(playerId){
+    bgWork.start("openDecklist");
+        showModal("decklist");
+        let cardList = scoreboard.players[playerId].deck.decklist;
+        let modalEl = document.querySelector("#modal");
+        modalEl.querySelector("#decklist-player-id").value = playerId;
+        let importButton = modalEl.querySelector("#decklist-import-button");
+        let commandersListEl = modalEl.querySelector("#decklist-commanders").getElementsByClassName("list")[0];
+        let mainboardListEl = modalEl.querySelector("#decklist-mainboard").getElementsByClassName("list")[0];
+        let sideboardListEl = modalEl.querySelector("#decklist-sideboard").getElementsByClassName("list")[0];
+        let nameTbx = modalEl.querySelectorAll(".search input");
+        scoreboard.players[playerId].deck.decklist.commanders.forEach((c) => {
+            addCardinDecklist(commandersListEl, c);
+        });
+        scoreboard.players[playerId].deck.decklist.mainboard.forEach((c) => {
+            addCardinDecklist(mainboardListEl, c);
+        });
+        scoreboard.players[playerId].deck.decklist.sideboard.forEach((c) => {
+            addCardinDecklist(sideboardListEl, c);
+        });
+        importButton.onclick = async () => {
+            let url = modalEl.querySelector("#decklist-import-url").value;
+            let importName = modalEl.querySelector("#decklist-import-name").checked;
+            let importColors = modalEl.querySelector("#decklist-import-colors").checked;
+            importDeckList(playerId, url, importName, importColors);
+        }
+        console.log(modalEl.querySelectorAll(".info"));
+        modalEl.querySelectorAll(".info").forEach(elem => {
+            elem.onclick = function (e) {
+                console.log(e);
+                let el = e.currentTarget.parentNode;
+                console.log(el);
+                let tbx = el.querySelector(".search input");
+                el.querySelector(".search").classList.add("visible");
+                tbx.value = '';
+                tbx.focus();
+                tbx.select();
+                e.stopPropagation();
+            }
+        })
+
+        nameTxbInput = e => {
+            let value = e.target.value.trim().toLowerCase();
+            let input = e.currentTarget;
+            let selectionElm = e.target.parentNode.querySelector(".selection");
+            db.get("card", {"name": {$regex: new RegExp(`${RegExp.escape(value)}`, 'i')}}, {limit: 20, sort: {"name": 1}}).then((list) => {
+                selectionElm.truncate();
+                selectedIndex = -1;
+
+                list.forEach((card, index) => {
+                    // build caster select items
+                    let item = document.createElement("div");
+                    item.classList.add("item");
+                    item.appendChild(createElement({"type": "div", "className": "name", "text": card.name}));
+                    if (e.type == "input" && (e.target.value == card.name || list.length == 1)) {
+                        selectedIndex = index;
+                    }
+                    item.classList.toggle("highlighted", selectedIndex == index);
+
+                    item.onclick = e => { // caster select item clicked
+                        input.blur();
+                        console.log(card);
+                        console.log(e.target.parentNode.parentNode.parentNode.parentNode);
+                        addCardinDecklist(e.target.parentNode.parentNode.parentNode.parentNode.getElementsByClassName("list")[0], {card: card, quantity: 1});
+                    };
+                    item.onmousedown = e => e.preventDefault();
+                    selectionElm.appendChild(item);
+                });
+
+            });
+        };
+
+        nameTbx.forEach(e => {
+            e.oninput = nameTxbInput;
+            e.onfocus = nameTxbInput;
+            e.onblur = () => modalEl.querySelectorAll(".search").forEach(e => {
+                e.classList.remove("visible");
+            });
+        });
+
+
+    bgWork.finish("openDecklist");
+
+}
+async function saveDecklist(playerId, modalEl){
+    bgWork.start("saveDecklist");
+    importColors = modalEl.querySelector("#decklist-import-colors").checked;
+    let list = {
+        commanders: [],
+        mainboard: [],
+        sideboard: []
+    }
+    modalEl.querySelectorAll("#decklist-commanders .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.commanders.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    modalEl.querySelectorAll("#decklist-mainboard .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.mainboard.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    modalEl.querySelectorAll("#decklist-sideboard .list .card").forEach(elem => {
+        let id = elem.dataset.id;
+        let quantity = parseInt(elem.querySelector('.card-amount').value, 10);
+        list.sideboard.push({
+            id: id,
+            quantity: quantity
+        })
+    })
+    let decklist = await decklistImporter.saveDecklist(list);
+    if(importColors && decklist.colors){
+        await setPlayerColors(playerId, decklist.colors);
+    }
+    if(decklist.mainboard) {
+        scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
+    } else{
+        scoreboard.players[playerId].deck.decklist.mainboard = [];
+    }
+    if(decklist.sideboard) {
+        scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
+    } else{
+        scoreboard.players[playerId].deck.decklist.sideboard = [];
+    }
+    if(decklist.commanders) {
+        scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+    } else{
+        scoreboard.players[playerId].deck.decklist.commanders = [];
+    }
+    fire("scoreboardchanged", true);
+    bgWork.finish("saveDecklist");
+
+}
+async function addCardinDecklist(list, card){
+    let tpl = document.getElementById('decklist-card-tpl');
+    let child = createElement({"type": "div", "className": "card", "append": tpl.content.cloneNode(true)});
+    child = list.appendChild(child);
+    child.dataset.id = card.card._id;
+    child.innerHTML = child.innerHTML.replace(/#NAME#/g, card.card.name);
+    child.innerHTML = child.innerHTML.replace(/#QUANTITY#/g, card.quantity);
+    child.innerHTML = child.innerHTML.replace(/#ID#/g, card.card._id);
+}
+async function importDeckList(playerId, url, importName = false, importColors = false) {
+    bgWork.start("importDeckList");
+    let decklist = await decklistImporter.importDeckList(url);
+    if(await decklist != null){
+        hideModal(false);
+        if(importName && decklist.deckname){
+            document.getElementById("deckname"+playerId).value = decklist.deckname;
+            document.getElementById("deckname"+playerId).dispatchEvent(new Event('input'));
+        }
+        if(importColors && decklist.colors){
+            await setPlayerColors(playerId, decklist.colors);
+        }
+        if(decklist.mainboard) {
+            scoreboard.players[playerId].deck.decklist.mainboard = decklist.mainboard;
+        } else{
+            scoreboard.players[playerId].deck.decklist.mainboard = [];
+        }
+        if(decklist.sideboard) {
+            scoreboard.players[playerId].deck.decklist.sideboard = decklist.sideboard;
+        } else{
+            scoreboard.players[playerId].deck.decklist.sideboard = [];
+        }
+        if(decklist.commanders) {
+            scoreboard.players[playerId].deck.decklist.commanders = decklist.commanders;
+        } else{
+            scoreboard.players[playerId].deck.decklist.commanders = [];
+        }
+        fire("scoreboardchanged", true);
+    }else{
+
+    }
+    bgWork.finish("importDeckList");
+}
+async function setPlayerColors(playerId, colors = []) {
+        const colorsAvailable = ["w", "u", "b", "r", "g"];
+        if(typeof scoreboard.players[playerId].deck.colors == "undefined"){
+            scoreboard.players[playerId].deck.colors = [];}
+        scoreboard.players[playerId].deck.colors = colors;
+        colorsAvailable.forEach(color => {
+            let btn = document.getElementById("colorbtn-" + color + "-" + playerId);
+            if(scoreboard.players[playerId].deck.colors.includes(color)){
+                btn.classList.add("checked");
+            }else{
+                btn.classList.remove("checked");
+            }
+        })
+        fire("scoreboardchanged", true);
+}
+
+function deleteCardFromList(el){
+    let element = el.parentElement;
+    element.remove();
+}
+
+function modalHotkeys(e) {
+    // if (e.keyCode == 27) {
+    //     hideModal();
+    // }
 }
