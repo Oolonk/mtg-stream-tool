@@ -132,122 +132,28 @@ class OverlayConnector {
      * @param playerNum
      * @returns {*|null}
      */
-    getPlayer(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
+    getPlayer(playerNum) {
 
-        if (this.cache.scoreboard.teams.hasOwnProperty(teamNum) && this.cache.scoreboard.teams[teamNum].players.hasOwnProperty(playerNum))
-            return this.cache.scoreboard.teams[teamNum].players[playerNum];
+        if (this.cache.scoreboard.players.hasOwnProperty(playerNum))
+            return this.cache.scoreboard.players[playerNum].player;
         return null;
     }
 
-    getPosition(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
-        let seats = this.cache.scoreboard.seatorder;
-        for (let i in seats) {
-            let seat = seats[i];
-            if (seat[0] == teamNum && seat[1] == playerNum) {
-                return i;
-            }
-        }
-    }
-
-    getPlayersByPosition() {
-        let list = [];
-        let seats = this.cache.scoreboard.seatorder;
-        for (let i in seats) {
-            list.push(this.getPlayer(seats[i][0], seats[i][1]));
-        }
-        return list;
-    }
-
-    getSelectedPlayer(teamNum) {
-        if (this.TeamSize > 1 && this.cache.scoreboard.teams.hasOwnProperty(teamNum) && this.cache.scoreboard.teams[teamNum].selected !== null) {
-            return this.cache.scoreboard.teams[teamNum].selected;
-        }
-        return 0;
-    }
-
-    getTeamName(teamNum, options) {
-        options = options || {};
-        let before = options.before || "";
-        let after = options.after || "";
-        let delimiter = options.delimiter || " / ";
-
-        let value = "";
-        if (!this.cache.hasOwnProperty("scoreboard") || !this.cache.scoreboard.hasOwnProperty("teams") || !this.cache.scoreboard.teams.hasOwnProperty(teamNum)) {
-            return ""; // team not here - something broken
-        }
-        if (!this.cache.scoreboard.teams[teamNum].hasOwnProperty("name") || this.cache.scoreboard.teams[teamNum].name.length == 0) {
-            // build teamname out of names
-            value = this.getTeamPlayers(teamNum).map(x => x.name).join(delimiter);
-        } else {
-            value = this.cache.scoreboard.teams[teamNum].name;
-        }
-        return before + value + after;
-    }
-
-    getTeamStatus(teamNum, playerNum) {
-        if (this.cache.scoreboard.type != "crews" || !this.cache.scoreboard.teams.hasOwnProperty(teamNum)) {
-            return null;
-        }
-        let list = [];
-
-        this.cache.scoreboard.teams[teamNum].out.forEach((isOut, index) => {
-            list.push({
-                "out": isOut,
-                "selected": this.cache.scoreboard.teams[teamNum].selected == index
-            });
-        });
-
-        if (playerNum != null) {
-            return list[playerNum];
-        }
-
-        return list;
-    }
-
-    getTeamPlayers(teamNum) {
-        if (!this.cache.scoreboard.teams.hasOwnProperty(teamNum)) {
-            return [];
-        }
-        let list = this.cache.scoreboard.teams[teamNum].players;
-
-        list = list.filter(player => player.name != "");
-
-        return list;
-    }
-
-    getScore(teamNum) {
-        if (this.cache.scoreboard.teams.hasOwnProperty(teamNum))
-            return this.cache.scoreboard.teams[teamNum].score;
+    getScore(playerNum) {
+        if (this.cache.scoreboard.players.hasOwnProperty(playerNum))
+            return this.cache.scoreboard.players[playerNum].score;
         return null;
     }
 
-    getState(teamNum) {
-        if (this.cache.scoreboard.teams.hasOwnProperty(teamNum))
-            return this.cache.scoreboard.teams[teamNum].state;
-        return null;
-    }
-
-    getCountry(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
-        let po = this.getPlayer(teamNum, playerNum);
+    getCountry(playerNum) {
+        let po = this.getPlayer(playerNum);
         if (po && this.cache.country.hasOwnProperty(po.country))
             return this.cache.country[po.country];
         return null;
     }
 
-    getPride(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
-        let po = this.getPlayer(teamNum, playerNum);
+    getPride(playerNum) {
+        let po = this.getPlayer(playerNum);
         let po2 = this.cache.pride;
         po2 = Object.keys(po2)
             .filter(key => po.pride.includes(key))
@@ -258,28 +164,13 @@ class OverlayConnector {
         return Object.values(po2);
     }
 
-    getPort(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
-        for (let i in this.cache.scoreboard.ports) {
-            if (this.cache.scoreboard.ports[i] != null && this.cache.scoreboard.ports[i][0] == teamNum && this.cache.scoreboard.ports[i][1] == playerNum) {
-                return parseInt(i);
-            }
-        }
-        return null;
-    }
-
-    getPlayerTeams(teamNum, playerNum) {
-        if (playerNum == null) {
-            playerNum = this.getSelectedPlayer(teamNum);
-        }
+    getPlayerTeams(playerNum) {
         let po, teams = [];
         if (teamNum instanceof Player) {
             po = teamNum;
         } else {
             playerNum = playerNum || 0;
-            po = this.getPlayer(teamNum, playerNum);
+            po = this.getPlayer(playerNum);
         }
         if (po == null) {
             return [];
