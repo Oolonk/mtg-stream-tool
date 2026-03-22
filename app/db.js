@@ -27,12 +27,14 @@ async function load() {
     event.emit("ready");
 }
 
-function add(dbName, docs) {
+function add(dbName, docs, removeId = true) {
     return new Promise((resolve, reject) => {
         if (!dbExists(dbName)) {
             return reject(new Error(`Database ${dbName} not found`));
         }
-        delete docs._id;
+        if(removeId) {
+            delete docs._id;
+        }
         _db[dbName].insert(docs, (err, newDocs) => {
             if (err)
                 return reject(err);
