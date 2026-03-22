@@ -11,6 +11,7 @@ var _ws, _cons, _theme;
 var _timeouts = {};
 
 var _callbacks = {on: {}, once: {}, hold: []}; // callbacks for on,once & fire
+var usedCards = []
 
 var matchList = [];
 
@@ -48,7 +49,8 @@ var client = {
     autoupdate: false,
     autoupdateThreshold: 500,
     playerSize: null,
-    fixedSidebar: true
+    fixedSidebar: true,
+    limitCards: false
 };
 
 var portAmount = 4;
@@ -253,6 +255,9 @@ async function applyClientSettings(settings) {
                 break;
             case 'apiPassword':
                 ipcRenderer.send("apiPassword", row.value);
+                break;
+            case 'limitCards':
+                toggleLimitCards(row.value);
                 break;
 
         }
@@ -597,7 +602,11 @@ function buildHighlightedCard() {
         nameTxbInput = e => {
             let value = e.target.value.trim().toLowerCase();
             let selectionElm = e.target.parentNode.querySelector(".selection");
-            db.get("card", {"name": {$regex: new RegExp(`${RegExp.escape(value)}`, 'i')}}, {limit: 20, sort: {"name": 1}}).then((list) => {
+            var args = {"name": {$regex: new RegExp(`${RegExp.escape(value)}`, 'i')}};
+            if(client.limitCards){
+                args.$or = [].concat(usedCards).map(x => { return { "_id": x } });
+            }
+            db.get("card", args, {limit: 20, sort: {"name": 1}}).then((list) => {
                 selectionElm.truncate();
                 selectedIndex = -1;
 
@@ -1107,6 +1116,7 @@ function insertScoreboardData(newScoreboard) {
     if (newScoreboard) {
         scoreboard = correctDynamicProperties(newScoreboard);
     }
+    updatedUsedCards();
 
     // Fix player object Instances
     for (let teamNum in scoreboard.teams) {
@@ -1305,6 +1315,11 @@ function toggleAutoUpdate(value) {
     client.autoupdate = (value != null ? value : !client.autoupdate);
     ipcRenderer.invoke("set", "autoupdate", client.autoupdate);
     document.getElementById('autoupdate-cbx').checked = client.autoupdate;
+}
+function toggleLimitCards(value){
+    client.limitCards = (value != null ? value : !client.limitCards);
+    ipcRenderer.invoke("set", "limitCards", client.limitCards);
+    document.getElementById('limitcards-cbx').checked = client.limitCards;
 }
 
 function autoUpdate(noThreshold) {
@@ -1794,7 +1809,7 @@ async function saveDecklist(playerId, modalEl){
     }
     fire("scoreboardchanged", true);
     bgWork.finish("saveDecklist");
-
+    updatedUsedCards();
 }
 async function addCardinDecklist(list, card){
     let tpl = document.getElementById('decklist-card-tpl');
@@ -1863,4 +1878,17 @@ function modalHotkeys(e) {
     // if (e.keyCode == 27) {
     //     hideModal();
     // }
+}
+async function updatedUsedCards(){
+    usedCards = []
+    scoreboard.players.forEach(player => {
+        var decklist = player.deck.decklist;
+        for(var boards in decklist){
+            decklist[boards].forEach(card => {
+                if(!usedCards.includes(card.card._id)){
+                    usedCards.push(card.card._id);
+                }
+            })
+        }
+    })
 }
