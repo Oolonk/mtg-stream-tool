@@ -180,7 +180,6 @@ let obsSceneListValues = {};
 let obsSceneListSelected = {};
 
 async function applyClientSettings(settings) {
-    console.log(settings)
     for (let row of settings) {
         switch (row.name) {
             case "theme":
@@ -320,7 +319,6 @@ function changeObsDropdown() {
 async function openSettingsWindow() {
     await openWindow('settings', null, true);
     let clientSettings = await ipcRenderer.invoke("get", "settings");
-    console.log(clientSettings);
     applyClientSettings(clientSettings);
 }
 
@@ -1029,7 +1027,6 @@ async function insertPlayerUI(playerNum) {
     let pEl = document.getElementById("playeritem-" + playerNum);
 
     pEl.querySelector("input.playername").insertValue(po.name);
-console.log(po);
     pEl.querySelector(".player-edit-btn").disabled = !po.InDB;
     pEl.querySelector(".player-create-btn").disabled = po.name.length == 0;
     // pEl.querySelector(".smashgg-apply-btn").disabled = isNaN(parseInt(po.smashgg)) && isNaN(parseInt(po.smashggMergeable));
@@ -1698,12 +1695,9 @@ async function openDecklist(playerId){
             let importColors = modalEl.querySelector("#decklist-import-colors").checked;
             importDeckList(playerId, url, importName, importColors);
         }
-        console.log(modalEl.querySelectorAll(".info"));
         modalEl.querySelectorAll(".info").forEach(elem => {
             elem.onclick = function (e) {
-                console.log(e);
                 let el = e.currentTarget.parentNode;
-                console.log(el);
                 let tbx = el.querySelector(".search input");
                 el.querySelector(".search").classList.add("visible");
                 tbx.value = '';
@@ -1733,8 +1727,6 @@ async function openDecklist(playerId){
 
                     item.onclick = e => { // caster select item clicked
                         input.blur();
-                        console.log(card);
-                        console.log(e.target.parentNode.parentNode.parentNode.parentNode);
                         addCardinDecklist(e.target.parentNode.parentNode.parentNode.parentNode.getElementsByClassName("list")[0], {card: card, quantity: 1});
                     };
                     item.onmousedown = e => e.preventDefault();

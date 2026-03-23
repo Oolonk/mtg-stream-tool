@@ -1765,10 +1765,10 @@ body:not(.fixedStreamQueue) #stream-queue:hover .list {
 
 #decklist-modal .search {
     display: none;
-    position: absolute;
+    position: relative;
     left: 0;
     right: 0;
-    top: 55px;
+    top: 0;
     padding: 3px;
     z-index: 20;
     background: #000;
