@@ -6,6 +6,7 @@ var events = new EventEmitter();
 function Scryfall() {
     this.lastCreated = null;
     this.isRunning = false;
+    this.db = null;
     this._callbacks = {on: {}, once: {}, any: []};
     this.event = new EventEmitter();
     this.base_url = 'https://api.scryfall.com';
@@ -62,22 +63,8 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
         console.warn('No data to insert into database');
         return;
     }
-    const db = this.nedb;
+    const db = this.db;
     var cards = data.cards;
-
-    // small helper to promisify NeDB-style callbacks
-    const promisifyDb = (fn, ...args) => {
-        return new Promise((resolve, reject) => {
-            try {
-                fn(...args, (err, res) => {
-                    if (err) return reject(err);
-                    resolve(res);
-                });
-            } catch (e) {
-                reject(e);
-            }
-        });
-    };
 
     for (let i = 0; i < cards.length; i++){
         const card = cards[i];
@@ -90,8 +77,8 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
         card._id = card.oracle_id || card.card_faces[0].oracle_id;
         let doc = null;
         try {
-            // wait for findOne to complete
-            doc = await promisifyDb(db.findOne.bind(db), { _id: card._id });
+            // getSingle already returns a Promise
+            doc = await db.getSingle('card', { _id: card._id });
         } catch (err) {
             console.error('Error checking for existing card in database:', err);
         }
@@ -99,12 +86,12 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
         let updateImages = true;
         if (!doc) {
             try {
-                await promisifyDb(db.insert.bind(db), card);
+                await db.add('card', card, false);
             } catch (err) {
                 console.error('Error inserting card into database:', err);
             }
         } else {
-            if (doc.image_status == 'highres_scan' || doc.images_status == card.image_status) {
+            if (doc.image_status == 'highres_scan' || doc.image_status == card.image_status) {
                 if (fs.existsSync(`${APPRES}/assets/card/front/${card._id}.png`)){
                     updateImages = false;
                 }
@@ -113,7 +100,10 @@ Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
                 updateImages = true;
             }
             try {
-                await promisifyDb(db.update.bind(db), {_id: card._id}, card, {});
+                // db.update expects (dbName, query, setDoc, noEmit)
+                // remove _id from setDoc to avoid trying to modify it
+                const setDoc = Object.assign({}, card);
+                await db.update('card', {_id: card._id}, setDoc, {});
             } catch (err) {
                 console.error('Error updating card in database:', err);
             }

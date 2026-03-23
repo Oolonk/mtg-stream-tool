@@ -68,6 +68,8 @@ async function initScryfall() {
 			filename: path.join(electron.APP.getPath("home"), 'MTG Stream Tool', 'db', 'card'),
 			autoload: true
 		});
+
+		scryfall.db = database;
 		scryfall.on("fetchingBulkData", () => {
 			console.log("Fetching Scryfall bulk data...");
 			scryfallUpdateRunning = true;
