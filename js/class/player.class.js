@@ -20,6 +20,8 @@ class Player {
         this.region = params.region || [];
 		this.smashgg = params.smashgg || [];
 		this.smashggIgnore = params.smashggIgnore || {};
+		this.parrygg = params.parrygg || [];
+		this.parryggIgnore = params.parryggIgnore || {};
 		this.lastActivity = params.lastActivity || null;
 
 	}
@@ -133,6 +135,10 @@ class Player {
 
 	get HasSmashgg() {
 		return !isNaN(parseInt(this.smashgg)) && this.smashgg != 0;
+	}
+
+	get HasParrygg() {
+		return this.parrygg && this.parrygg.length > 0;
 	}
 
 	get PhotoPath() {

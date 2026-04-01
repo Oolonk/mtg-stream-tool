@@ -90,6 +90,34 @@
                 <div class="saved" id="showSmashggToken-saved"></div>
             </div>
         </details>
+        <details class="parrygg-settings">
+            <summary>Parry.gg Settings</summary>
+            <div class="item">
+                <div class="label">Parry.gg Token</div>
+                <div class="saved" id="parrygg-token-saved"></div>
+                <input type="text" id="parrygg-token-value" oninput="set('parrygg-token', this.value)" value=""
+                       placeholder="Your developer token"/>
+                <div class="description">
+                    In order to access Parry.gg’s API, you must enter an authentication token.
+                    These tokens can be created from the Developer Settings page in your Parry.gg account settings.
+                    <a href="javascript:shell.openExternal('https://parry.gg/api-keys');">Generate an API-Key</a>
+                </div>
+            </div>
+            <div class="item item-short">
+                <input class="toggle-color" type="checkbox" id="showParryggToken-value" oninput="set('showParryggToken', this.checked)"
+                       value=""
+                />
+                <div class="label">Show Parry.gg Token inside the Overlay <br><b>(use only when you are not in a public network)</b></div>
+                <div class="saved" id="showParryggToken-saved"></div>
+            </div>
+            <div class="item item-short">
+                <input class="toggle-color" type="checkbox" id="parrygg-hideNotReadySets-value" oninput="set('parrygg-hideNotReadySets', this.checked)"
+                       value=""
+                />
+                <div class="label">Hide sets where not all participants are available.</div>
+                <div class="saved" id="parrygg-hideNotReadySets-saved"></div>
+            </div>
+        </details>
         <details class="obs-settings hide">
             <summary>OBS Websocket Settings</summary>
             <div class="item">

@@ -2,7 +2,7 @@ const smashgg = new SmashggWrapper();
 var streamvar = {}
 smashgg.on("streamschanged", (stream) => {
 	document.querySelector("#stream-queue .list .title .channel").innerText = (stream == null ? "No stream selected" : stream.streamName);
-    document.querySelector("#stream-queue .list .title").dataset.site = "smashgg";
+	document.querySelector("#stream-queue .list .title").dataset.site = "smashgg";
 });
 smashgg.on("streamqueuechanged", displaySmashggStreamQueue);
 smashgg.on("streamqueuechanged", (sets) => {
@@ -14,9 +14,9 @@ on("ws-ready", async () => {
 	await ipcRenderer.invoke("get", "smashgg").then((data) => {
 		smashgg.SelectedTournament = data.tournament;
 		smashgg.SelectedStream = data.stream;
-        if(data.stream != null) {
-            smashgg.startStreamQueuePolling();
-        }
+		if(data.stream != null) {
+			smashgg.startStreamQueuePolling();
+		}
 	});
 });
 
@@ -27,6 +27,13 @@ async function applySmashggSet(setId) {
 	let teamSize = 1;
 	var set = await smashgg.getSet(setId, 0);
 	console.log(set)
+	scoreboard.parrygg = {
+		set: null,
+		bracket: null,
+		event: null,
+		phase: null,
+		tournament: null,
+	};
 	scoreboard.startgg.set = set.id;
 	scoreboard.startgg.event = set.event.id;
 	scoreboard.startgg.phaseGroup = set.phaseGroup.id;
@@ -48,7 +55,7 @@ async function applySmashggSet(setId) {
 				// has matching ID - just insert
 				insertPlayer = exactRes[0];
 			} else if (res.length > 0) {
-				// has matching name - insert and set mergable 
+				// has matching name - insert and set mergable
 				insertPlayer = res[0];
 				insertPlayer.smashggMergeable = participant.player.id;
 			} else {
@@ -60,7 +67,7 @@ async function applySmashggSet(setId) {
 		teamSize = Math.max(teamSize, slot.entrant.participants.length);
 	}
 
-	setPlayerSize(teamSize);
+	setTeamSize(teamSize);
 
 	if (set.phaseGroup.bracketType == "ROUND_ROBIN") {
 		set.fullRoundText = `${set.phaseGroup.phase.name} ${set.phaseGroup.displayIdentifier}`;
@@ -106,11 +113,11 @@ on("scoreboardsmashggchanged", displaySmashggCurrent);
 function applySmashggSettings(tournamentSlug, streamId) {
 	smashgg.SelectedTournament = tournamentSlug;
 	smashgg.SelectedStream = streamId;
-    if(tournamentSlug != null) {
-        smashgg.startStreamQueuePolling();
-    }else {
-        smashgg.stopStreamQueuePolling();
-    }
+	if(tournamentSlug != null) {
+		smashgg.startStreamQueuePolling();
+	}else {
+		smashgg.stopStreamQueuePolling();
+	}
 }
 
 async function displaySmashggStreamQueue(sets) {
@@ -166,6 +173,9 @@ async function getSmashggDifferences(player) {
 
 	player = await db.resolveRelations("player", player);
 	let smashggPlayer = await smashgg.getPlayer(player.smashgg);
+	if(smashggPlayer == null){
+		return res;
+	}
 	res.differences = SmashggWrapper.comparePlayer(player, smashggPlayer);
 	return res;
 }

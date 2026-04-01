@@ -21,6 +21,11 @@ addEventListener("load", async () => {
 			case "showSmashggToken":
 				el.checked = entry.value ? 1 : 0;
 				break;
+			case "showParryggToken":
+				el.checked = entry.value ? 1 : 0;
+				break;
+			case "parrygg-hideNotReadySets":
+				el.checked = entry.value ? 1 : 0;
 			case "enable-obs":
 				el.checked = entry.value ? 1 : 0;
 				if(entry.value != null && entry.value) {

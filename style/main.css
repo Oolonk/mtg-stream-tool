@@ -1624,6 +1624,10 @@ body:not(.fixedStreamQueue) #stream-queue:hover .list {
     background-image: url('../img/smashgg-icon.svg');
 }
 
+#stream-queue .list .title[data-site="parrygg"] {
+    background-image: url('../img/parrygg-icon.svg');
+}
+
 
 #stream-queue .list .title .setcount {
     position: absolute;

@@ -184,6 +184,23 @@ server.on('data-getPlayersByStartGGId', async (data, cb) => {
 
 });
 
+server.on('data-getPlayersByParryGGId', async (data, cb) => {
+	console.log(data);
+	let randomId = data.mid;
+	let parryGGIds = data.data;
+	let returnData = []
+	if(Array.isArray(parryGGIds)) {
+		for(let i = 0; i < parryGGIds.length; i++) {
+			let id = parryGGIds[i];
+			returnData = returnData.concat(await database.get("player", {  "parrygg": id  }));
+		}
+	}else{
+		returnData = returnData.concat(await database.get("player", {  "parrygg": parryGGIds  }));
+	}
+	server.sendToID({ type: 'getPlayersByParryGGId-' + randomId, data: await returnData }, data.id);
+
+});
+
 electron.ipcMain.on('switchScene', (event, name) => {
 	obs.setCurrentScene(name)
 });
@@ -202,6 +219,9 @@ var startedOnce = false;
 
 
 electron.ipcMain.on('obsIp', (event, name) => {obs.setIp(name)});
+electron.ipcMain.on('parryggHideNotReadySets', (event, name) => {
+	console.log("parrygg-hideNotReadySets", name);
+	parryGGHideNotReadySets(Boolean(name))});
 electron.ipcMain.on('obsPort', (event, name) => {obs.setPort(name)});
 electron.ipcMain.on('obsPassword', (event, name) => {obs.setPassword(name)});
 electron.ipcMain.on('obs', (event, name) => {obsChanger(event, name)});
@@ -230,6 +250,15 @@ electron.ipcMain.handle('get', async (event, name) => {
 				break;
 			case "smashgg-token":
 				clientSettings.find({ "name": "smashgg-token" }, (e, row) => {
+					if (e || !row || !row[0]) {
+						resolve("");
+					} else {
+						resolve(row[0].value);
+					}
+				});
+				break;
+			case "parrygg-token":
+				clientSettings.find({ "name": "parrygg-token" }, (e, row) => {
 					if (e || !row || !row[0]) {
 						resolve("");
 					} else {

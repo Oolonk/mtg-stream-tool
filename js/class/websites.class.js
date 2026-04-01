@@ -77,6 +77,15 @@ class SmashggWrapper extends WebsiteWrapper {
         7: "MATCHMAKING",
         8: "ELIMINATION_ROUNDS"
     }
+    static EVENT_TYPE = {
+        SINGLES: 1,
+        TEAMS: 5,
+        CREWS: 3,
+
+        1: "SINGLES",
+        5: "TEAMS",
+        3: "CREWS"
+    }
     static GRAPHQL_FIELDS = {
         STREAM: `id streamSource streamType streamName isOnline followerCount streamStatus streamLogo`,
         TOURNAMENT: `id name hashtag slug shortSlug startAt endAt state timezone venueAddress venueName images { id width height type url }`,
@@ -123,7 +132,7 @@ class SmashggWrapper extends WebsiteWrapper {
         tournamentSlug = tournamentSlug == null ? this.selectedTournament : tournamentSlug;
         if (tournamentSlug == null) { return; }
         let tournament = this.getCache("tournament-smashgg", tournamentSlug, cacheMaxAge);
-        if (tournament == null) {
+        if (tournament == null) {try {
             let res = await this.query(`query ($slug: String!) {
 				tournament(slug: $slug){
 					id name city countryCode createdAt rules hashtag numAttendees primaryContact primaryContactType shortSlug slug startAt endAt timezone tournamentType
@@ -142,6 +151,9 @@ class SmashggWrapper extends WebsiteWrapper {
             if (res == null) { return null; }
             tournament = res.tournament;
             this.setCache("tournament-smashgg", tournamentSlug, tournament);
+        } catch (e) {
+            return null;
+        }
         }
         return tournament;
     }
@@ -340,12 +352,16 @@ class SmashggWrapper extends WebsiteWrapper {
     }
 
     async findTournament(term) {
-        let res = await this.query(`query ($term: String!) {
+        try {
+            let res = await this.query(`query ($term: String!) {
 			tournament(slug: $term){
 				${SmashggWrapper.GRAPHQL_FIELDS.TOURNAMENT}
 			}
 		}`, { "term": term });
-        return res.tournament;
+            return res.tournament;
+        } catch (err) {
+            return null;
+        }
     }
 
     async fetchStreamQueue() {
@@ -510,16 +526,20 @@ class SmashggWrapper extends WebsiteWrapper {
     }
 
     async request(args) {
-        const fetchResponse = await fetch(SmashggWrapper.ENDPOINT, {
-            method: 'POST',
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + this.token
-            },
-            body: JSON.stringify(args)
-        });
-        return await fetchResponse.json();
+        try{
+            const fetchResponse = await fetch(SmashggWrapper.ENDPOINT, {
+                method: 'POST',
+                cache: 'no-cache',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + this.token
+                },
+                body: JSON.stringify(args)
+            });
+            return await fetchResponse.json();
+        } catch(err) {
+            return null;
+        }
     }
 
     destroy() {
@@ -655,4 +675,595 @@ class SmashggWrapper extends WebsiteWrapper {
         return current ? current.url : null;
     }
 
+}
+class ParryggWrapper extends WebsiteWrapper{
+    static ENDPOINT = "https://grpcweb.parry.gg";
+    constructor() {
+        super();
+        this.parrygg = require('@parry-gg/client');
+        this.emitter = new (require("events"))();
+        this.token = "";
+        this.streamQueuePollInterval = 6000; // ms (6s)
+        this.cacheMaxAge = 60000; // ms (60s)
+        this.timers = {};
+        this.cache = { sets: {}, tournaments: {}, players: {} };
+        this.events = {};
+        this.hideNotReadySets = true;
+
+
+        this.requestCounter = [];
+        this.rateLimitTimeFrame = 60 * 1000; //  = seconds
+        this.rateLimitAmount = 80; //  = requests
+
+        this.selectedTournament = null;
+        this.selectedStream = null;
+        this.brackets = [];
+        this.streamQueueSetIdList = [];
+        this.client = new this.parrygg.UserServiceClient(ParryggWrapper.ENDPOINT);
+        this.event = null;
+        this.tournamentClient = new this.parrygg.TournamentServiceClient(ParryggWrapper.ENDPOINT);
+        this.bracketClient = new this.parrygg.BracketServiceClient(ParryggWrapper.ENDPOINT);
+        this.userClient = new this.parrygg.UserServiceClient(ParryggWrapper.ENDPOINT);
+        this.matchClient = new this.parrygg.MatchServiceClient(ParryggWrapper.ENDPOINT);
+        this.tournamentObject = null;
+        this.eventClient = new this.parrygg.EventServiceClient(ParryggWrapper.ENDPOINT);
+        this.phaseClient = new this.parrygg.PhaseServiceClient(ParryggWrapper.ENDPOINT);
+    }
+
+    get createAuthMetadata() {
+        return {
+            'X-API-KEY': this.token,
+        };
+    }
+
+    set Token(val) {
+        this.token = val.trim();
+    }
+
+    set SelectedTournament(val) {
+        if (this.selectedTournament == val) { return; }
+        this.selectedTournament = val;
+        this.SelectedStream = null;
+    }
+
+    static comparePlayer(local, remote, includeIgnore) {
+        // normalize remote structure to local structure
+        remote = this.convertPlayerStructure(remote);
+
+        let diffs = [];
+
+        for (let key in local) {
+            if (!remote.hasOwnProperty(key)) { continue }
+
+            let ignored = false;
+            if (local.hasOwnProperty("parryggIgnore") && local.parryggIgnore.hasOwnProperty(key)) {
+                ignored = (local.parryggIgnore[key] == remote[key]);
+            }
+
+            let compareResult = false;
+            switch (key) {
+                case "country":
+                function recursiveNationCompare(country, countryName) {
+                    if (country == null) { return false; }
+                    if (country.name == countryName) { return true; }
+                    if (country.nation == null || country.nation.length == 0) { return false; }
+                    return recursiveNationCompare(country.nation, countryName);
+                }
+                    compareResult = !recursiveNationCompare(local[key], remote[key]);
+                    break;
+                case "region":
+                    compareResult = local[key].name != remote[key];
+                    break;
+                default: compareResult = local[key] != remote[key]; break;
+            }
+
+            if (compareResult) {
+                if (!ignored || includeIgnore) {
+                    diffs.push({ "field": key, "local": local[key], "parrygg": remote[key], "ignored": ignored });
+                }
+            }
+        }
+        return diffs;
+    }
+    static convertPlayerStructure(data) {
+        let fixed = {
+            "name": data.gamerTag,
+            "pronoun": "",
+            "firstname": "",
+            "lastname": "",
+            "country": "",
+            "city": "",
+            // "twitter": "",
+            // "twitch": "",
+            // "steam": "",
+            // "birthday": ""
+        };
+        if (data.player) {
+            fixed.name = data.gamerTag;
+        }
+        fixed.pronoun = data.pronouns;
+        fixed.lastname = data.lastName;
+        fixed.firstname = data.firstName;
+        fixed.city = data.locationCity;
+        fixed.country = data.country;
+        fixed.region = data.state;
+        // console.log(data);
+        // console.log(fixed);
+        return fixed;
+    }
+
+    getSetRoundName(set, bracket) {
+        var matchList = bracket.matchesList;
+        //get highest round number for winners and losers
+        var highestWinnersRound = 0;
+        var highestLosersRound = 0;
+        matchList.forEach(match => {
+            if(!match.grandFinals) {
+                if (match.winnersSide) {
+                    if (match.round > highestWinnersRound) {
+                        highestWinnersRound = match.round;
+                    }
+                } else {
+                    if (match.round > highestLosersRound) {
+                        highestLosersRound = match.round;
+                    }
+                }
+            }
+        });
+        if (bracket.type == parrygg.parrygg.BracketType.BRACKET_TYPE_DOUBLE_ELIMINATION) {
+            if (set.grandFinals) {
+                return "Grand Finals";
+            } else if(set.winnersSide){
+                if(set.round === highestWinnersRound){
+                    return "Winners Final";
+                } else if(set.round === highestWinnersRound -1){
+                    return "Winners Semi-Final";
+                } else if(set.round === highestWinnersRound -2){
+                    return "Winners Quarter-Final";
+                }
+                return "Winners Round " + set.round;
+            } else {
+                if(set.round === highestLosersRound){
+                    return "Losers Final";
+                } else if(set.round === highestLosersRound -1){
+                    return "Losers Semi-Final";
+                } else if(set.round === highestLosersRound -2){
+                    return "Losers Quarter-Final";
+                } else if(set.round === highestLosersRound -3){
+                    return "Losers Top 8";
+                }
+                return "Losers Round " + set.round;
+            }
+        } else if(bracket.type === parrygg.parrygg.BracketType.BRACKET_TYPE_SINGLE_ELIMINATION) {
+            return "Round " + set.round;
+        } else if(bracket.type === parrygg.parrygg.BracketType.BRACKET_TYPE_ROUND_ROBIN) {
+            var round = bracket.name;
+            if(round == "Bracket"){
+                round = "Round Robin";
+            }
+            return round;
+        }
+        return "";
+    }
+
+    getAdditionalTournamentInfos(tournament) {
+        return {
+            slug: this.getSlug(tournament),
+            primarySlug: this.getSlug(tournament, true),
+            pictures: this.getTournamentPictures(tournament)
+        }
+    }
+
+    async getAdditionalUserInfos(user) {
+        let additional =  {
+            country: await this.convertCountry(user.locationCountry),
+            state: await this.convertRegion(user.locationCountry, user.locationState),
+            pictures: this.getUserPictures(user)
+        }
+        return await additional;
+    }
+    async convertRegion(countryCode, regionCode){
+        // var country = await this.convertCountry(countryCode);
+        var json = await fetch(`./json/states.json`);
+        var states = await json.json();
+        var region = states.filter((state) => state.iso2 === regionCode && state.country_code === countryCode);
+        // console.log(region);
+        if(region[0]){
+            return region[0].name;
+        }
+        return null;
+    }
+    async convertCountry(countryCode){
+        var json = await fetch(`./json/countries.json`);
+        json = await json.json();
+        var country = await json.filter((country) => country.iso2 === countryCode);
+        // console.log(country);
+        if(country[0]){
+            return country[0].name;
+        }
+        return null;
+    }
+
+    getSlug(tournament, primary = false) {
+        var slug =
+            tournament.slugsList.find(
+                (slug) => slug.type === this.parrygg.SlugType.SLUG_TYPE_CUSTOM,
+            )?.slug || '';
+        if(slug === '' || primary){
+            slug = tournament.slugsList.find(
+                (slug) => slug.type === this.parrygg.SlugType.SLUG_TYPE_PRIMARY,
+            )?.slug || '';
+        }
+        return slug;
+    }
+
+    getTournamentPictures(tournament) {
+        return{
+            'banner': tournament.imagesList.find(
+                (image) => image.type === this.parrygg.ImageType.IMAGE_TYPE_BANNER,
+            )?.url || ''
+        };
+
+    }
+
+    getUserPictures(tournament) {
+        return{
+            'banner': tournament.imagesList.find(
+                (image) => image.type === this.parrygg.ImageType.IMAGE_TYPE_BANNER,
+            )?.url || '',
+            'avatar': tournament.imagesList.find(
+                (image) => image.type === this.parrygg.ImageType.IMAGE_TYPE_AVATAR,
+            )?.url || ''
+        };
+
+    }
+
+    async findTournaments(name){
+        const request = new this.parrygg.GetTournamentsRequest();
+        const tournamentsFilter = new this.parrygg.TournamentsFilter();
+        const options = new this.parrygg.GetTournamentsOptions();
+        options.setReturnPermissions(true);
+        tournamentsFilter.setName(name);
+        request.setFilter(tournamentsFilter);
+        request.setOptions(options);
+        try {
+            const response = await this.tournamentClient.getTournaments(
+                request,
+                this.createAuthMetadata,
+            );
+            return response.getTournamentsList()
+                .sort((a, b) => {
+                    return b.getStartDate().getSeconds() - a.getStartDate().getSeconds();
+                })
+                .map((tournament) => (Object.assign(tournament.toObject(), this.getAdditionalTournamentInfos(tournament.toObject()))));
+        }catch (error) {
+
+        }
+        return [];
+    }
+
+    async getPhase(phaseId, cacheMaxAge) {
+        if (phaseId == null) { return; }
+        let phase = this.getCache("phase-parry", phaseId, cacheMaxAge);
+        if( phase == null) {
+            const request = new this.parrygg.GetPhaseRequest();
+            request.setId(phaseId);
+            try {
+
+                const response = await this.phaseClient.getPhase(
+                    request,
+                    this.createAuthMetadata,
+                );
+                this.setCache("phase-parry", phaseId, response.getPhase().toObject());
+                return response.getPhase().toObject();
+            } catch (error) {
+                return null;
+            }
+        }
+        return phase;
+    }
+
+    async getTournament(tournamentSlug, cacheMaxAge) {
+        tournamentSlug = tournamentSlug == null ? this.selectedTournament : tournamentSlug;
+        if (tournamentSlug == null) { return; }
+        let tournament = this.getCache("tournament-parry", tournamentSlug, cacheMaxAge);
+        if( tournament == null) {
+            const request = new this.parrygg.GetTournamentRequest();
+            request.setTournamentSlug(tournamentSlug);
+            try {
+
+                const response = await this.tournamentClient.getTournament(
+                    request,
+                    this.createAuthMetadata,
+                );
+                var returnObject = Object.assign(response.getTournament().toObject(), this.getAdditionalTournamentInfos(response.getTournament().toObject()));
+                this.setCache("tournament-parry", tournamentSlug, returnObject);
+                return returnObject;
+            } catch (error) {
+                return null;
+            }
+        }
+        return tournament;
+    }
+    async getTournamentById(tournamentId, cacheMaxAge) {
+        if (tournamentId == null) { return; }
+        let tournament = this.getCache("tournamentId-parry", tournamentId, cacheMaxAge);
+        if( tournament == null) {
+            const request = new this.parrygg.GetTournamentRequest();
+            const tournamentIdentifier = new this.parrygg.TournamentIdentifier();
+            tournamentIdentifier.setId(tournamentId);
+            request.setTournamentIdentifier(tournamentIdentifier);
+            try {
+
+                const response = await this.tournamentClient.getTournament(
+                    request,
+                    this.createAuthMetadata,
+                );
+                var returnObject = Object.assign(response.getTournament().toObject(), this.getAdditionalTournamentInfos(response.getTournament().toObject()));
+                this.setCache("tournamentId-parry", tournamentId, returnObject);
+                return returnObject;
+            } catch (error) {
+                return null;
+            }
+        }
+        return tournament;
+    }
+    async findParticipants(tag) {
+        const request = new this.parrygg.GetUsersRequest();
+        // request.setTournamentId(this.selectedTournament.id);
+        const filter = new this.parrygg.UsersFilter();
+        filter.setGamerTag(tag);
+        request.setFilter(filter);
+        try {
+            const response = await this.userClient.getUsers(
+                request,
+                this.createAuthMetadata,
+            );
+            var returns =  Promise.all(response.getUsersList()
+                .map(async (user) => await Object.assign(user.toObject(), await this.getAdditionalUserInfos(user.toObject()))));
+            return await returns;
+
+        } catch (error) {}
+        return [];
+    }
+    async getPlayer(playerId, cacheMaxAge) {
+        if (playerId == null) {
+            return null;
+        }
+        let player = this.getCache("player-parry", playerId, cacheMaxAge);
+        if (player == null) {
+            const request = new this.parrygg.GetUserRequest();
+            request.setId(playerId);
+            try {
+                const response = await this.userClient.getUser(
+                    request,
+                    this.createAuthMetadata,
+                );
+                player = response.getUser().toObject();
+                player = await Object.assign(player, await this.getAdditionalUserInfos(player));
+                this.setCache("player-parry", playerId, player);
+            }
+            catch (error) {
+                return null;
+            }
+        }
+
+        return player;
+    }
+
+    async setBrackets() {
+        this.brackets = [];
+        var tournament = await this.getTournament(this.selectedTournament);
+        var tournamentSlug = await tournament.slug;
+        var events = [];
+        tournament.eventsList.forEach(event => {
+            var phases = [];
+            event.phasesList.forEach(phase => {
+                var brackets = [];
+                phase.bracketsList.forEach(bracket => {
+                    brackets.push(bracket.id);
+                })
+                phases[phase.id] = {name: phase.slug, brackets: brackets};
+            })
+            events[event.id] = {name: event.name, phases: phases};
+        })
+        this.brackets = {tournament: tournamentSlug, events: events};
+    }
+
+    async getSetsFromStreamQueue() {
+        var sets = [];
+        if (!this.brackets || !this.brackets.events) {
+            return sets;
+        }
+
+        // Iterate events (works for arrays or objects)
+        for (const [eventId, event] of Object.entries(this.brackets.events)) {
+            if (!event.phases) { continue; }
+            // Iterate phases (works for arrays or objects)
+            for (const [phaseId, phase] of Object.entries(event.phases)) {
+                const bracketIds = phase.brackets;
+                if (!Array.isArray(bracketIds) || bracketIds.length === 0) { continue; }
+
+                // Create promises for all bracket fetches in this phase
+                const bracketPromises = bracketIds.map(async (bracketId) => {
+                    var bracket = await this.getBracket(bracketId);
+                    if( bracket === null) {
+                        return null;
+                    }
+                    var matches =  bracket.matchesList;
+                    // var rightStates = [this.parrygg.MatchState.MATCH_STATE_PENDING, this.parrygg.MatchState.MATCH_STATE_IN_PROGRESS, this.parrygg.MatchState.MATCH_STATE_READY];
+                    var rightStates = [this.parrygg.MatchState.MATCH_STATE_IN_PROGRESS, this.parrygg.MatchState.MATCH_STATE_READY];
+                    if(this.hideNotReadySets == false){
+                        rightStates.push(this.parrygg.MatchState.MATCH_STATE_PENDING);
+                    }
+                    //
+                    return matches.filter(match => rightStates.includes(match.state)).map(match => Object.assign(match, {event: {id: eventId, name: event.name}, phase: {id: phaseId, name: phase}, bracket: {id: bracketId}, tournament: {id: this.tournamentObject.id, name: this.tournamentObject.name}}));
+                });
+
+                // Wait for all brackets in this phase and add successful results
+                const results = await Promise.all(bracketPromises);
+                results.forEach(r => { if (r) {
+                    r.forEach(bracket => {
+                        sets.push(bracket);
+                    })} });
+            }
+        }
+        return await sets;
+
+    }
+
+    async getEntrantFromSeedAndBracket(slotId, bracketId, cacheMaxAge) {
+        var participant = {
+            id: null,
+            name: "N/A",
+        };
+        if (slotId == null || bracketId == null) {
+            return participant;
+        }
+        let participantNew = this.getCache("entrantfromseedandbracket-parry", slotId + '|' + bracketId, cacheMaxAge);
+        if (participantNew == null) {
+            var bracket = await this.getBracket(bracketId);
+            if( bracket !== null) {
+                participantNew = bracket.seedsList.find(seed => seed.id === slotId);
+                if(participantNew == undefined){
+                    return participant;
+                }
+                participantNew = participantNew.eventEntrant;
+                if(participantNew && participantNew.name == ""){
+                    if(participantNew.entrant.usersList.length > 0){
+                        participantNew.name = participantNew.entrant.usersList[0].gamerTag;
+                    }
+                }
+                this.setCache("entrantfromseedandbracket-parry", slotId + '|' + bracketId, participantNew);
+            }
+        }
+
+        return participantNew;
+    }
+    async getBracket(bracketId, cacheMaxAge) {
+        if (bracketId == null) {
+            return null;
+        }
+        var bracket = this.getCache("bracket-parry", bracketId, cacheMaxAge);
+        if (bracket == null) {
+            const request = new this.parrygg.GetBracketRequest();
+            request.setId(bracketId);
+
+            try {
+
+                const response = await this.bracketClient.getBracket(
+                    request,
+                    this.createAuthMetadata,
+                );
+                bracket =  response.getBracket().toObject();
+                this.setCache("bracket-parry", bracketId, bracket);
+            }
+            catch (error) {
+                return null;
+            }
+        }
+        // console.log(bracket);
+        return bracket;
+    }
+    async getEvent(eventId, cacheMaxAge) {
+        if (eventId == null) {
+            return null;
+        }
+        var event = this.getCache("event-parry", eventId, cacheMaxAge);
+        if (event == null) {
+            const request = new this.parrygg.GetEventRequest();
+            request.setId(eventId);
+
+            try {
+
+                const response = await this.eventClient.getEvent(
+                    request,
+                    this.createAuthMetadata,
+                );
+                event =  response.getEvent().toObject();
+                this.setCache("event-parry", eventId, event);
+            }
+            catch (error) {
+                return null;
+            }
+        }
+        // console.log(event);
+        return event;
+    }
+
+    async fetchStreamQueue() {
+        // if (this.selectedTournament == null || this.selectedStream == null) {
+        if (this.selectedTournament == null) {
+            this.stopStreamQueuePolling();
+        }
+
+        var sets = await this.getSetsFromStreamQueue();
+        // if (res.tournament.streams.some(x => x.id == this.selectedStream) == false) {
+        //     // this tournament does not have a stream with selectedStream slug
+        //     this.selectedStream = null;
+        //     this.stopStreamQueuePolling();
+        // }
+
+        // let queues = res.tournament.streamQueue;
+        // if (queues != null && queues.length > 0) {
+        //     let queue = queues.find(x => x.stream.id == this.selectedStream);
+        //     if (queue != null && queue.sets != null && queue.sets.length > 0) {
+        //         sets = queue.sets;
+        //     }
+        // }
+
+        if (sets.map(x => x.id).join("-") != this.streamQueueSetIdList.join("-")) {
+            this.streamQueueSetIdList = sets.map(x => x.id);
+            this.emit("streamqueuechanged", sets);
+        }
+
+        return sets;
+    }
+
+    async getSet(setId, cacheMaxAge) {
+        if (setId == null) { return null; }
+        let set = this.getCache("set-parry", setId, cacheMaxAge);
+        if (set == null) {
+            const request = new this.parrygg.GetMatchRequest();
+            request.setId(setId);
+            try {
+                const response = await this.matchClient.getMatch(
+                    request,
+                    this.createAuthMetadata,
+                );
+                set = Object.assign(response.getMatch().toObject(), {});
+                this.setCache("set-parry", setId, set);
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+        return set;
+    }
+
+
+    async getPlayerPhoto(playerId, cacheMaxAge) {
+        let player = await this.getPlayer(playerId, cacheMaxAge);
+        console.log(await player);
+        if (player == null || player.pictures == null) { return null; }
+        let url = await player.pictures.avatar;
+        console.log(await player.pictures.avatar);
+        return await fetch(url);
+    }
+
+    startStreamQueuePolling(pollInterval) {
+        this.stopStreamQueuePolling();
+
+        this.emit("streamschanged", 'no stream rn');
+
+        this.fetchStreamQueue();
+        this.timers.streamQueuePoll = setInterval(() => this.fetchStreamQueue(), pollInterval || this.streamQueuePollInterval);
+    }
+
+    stopStreamQueuePolling() {
+        if (this.timers.hasOwnProperty("streamQueuePoll")) {
+            clearTimeout(this.timers.streamQueuePoll);
+            this.emit("streamschanged", null);
+        }
+    }
 }

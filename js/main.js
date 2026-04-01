@@ -35,7 +35,15 @@ var scoreboard = {
         phaseGroup: null,
         phase: null
     },
+    parrygg: {
+        set: null,
+        bracket: null,
+        event: null,
+        phase: null,
+        tournament: null,
+    },
     smashggtoken: null,
+    parryggtoken: null,
     _D: null
 };
 var streamQueue = [];
@@ -174,6 +182,8 @@ window.addEventListener("keydown", (e) => {
 }, true);
 
 let smashggToken = "";
+let parryggToken = "";
+let showparryggToken = false;
 let showsmashggToken = false;
 let obsSceneList = [];
 let obsSceneListValues = {};
@@ -184,6 +194,15 @@ async function applyClientSettings(settings) {
         switch (row.name) {
             case "theme":
                 await setTheme(row.value);
+                break;
+            case "parrygg-token":
+                parryggToken = row.value;
+                parrygg.Token = row.value;
+                if (showparryggToken) {
+                    scoreboard.parryggtoken = row.value;
+                } else {
+                    scoreboard.parryggtoken = "";
+                }
                 break;
             case "smashgg-token":
                 smashggToken = row.value;
@@ -200,6 +219,14 @@ async function applyClientSettings(settings) {
                     scoreboard.smashggtoken = smashggToken;
                 } else {
                     scoreboard.smashggtoken = "";
+                }
+                break;
+            case "showParryggToken":
+                showparryggToken = row.value;
+                if (row.value) {
+                    scoreboard.parryggtoken = parryggToken;
+                } else {
+                    scoreboard.parryggtoken = "";
                 }
                 break;
             case "autoupdate":
@@ -257,6 +284,11 @@ async function applyClientSettings(settings) {
                 break;
             case 'limitCards':
                 toggleLimitCards(row.value);
+                break;
+            case "parrygg-hideNotReadySets":
+                console.log("parrygg-hideNotReadySets", row.value);
+                parryGGHideNotReadySets(row.value);
+                ipcRenderer.send("parryggHideNotReadySets", row.value);
                 break;
 
         }
@@ -818,6 +850,13 @@ async function setCaster(index, co) {
                 } // outdated request - quit out
                 casterEl.querySelector(".info .player-options .player-edit-btn").classList.toggle("outdated", res.differences.length > 0);
             });
+            getParryggDifferences(co).then((res) => {
+                console.log(res);
+                if (scoreboard.caster[index]._id != id) {
+                    return;
+                } // outdated request - quit out
+                casterEl.querySelector(".info .player-options .player-edit-btn").classList.toggle("outdated", res.differences.length > 0);
+            });
         } else {
             casterEl.querySelector(".info .player-options .player-edit-btn").classList.remove("outdated");
         }
@@ -1038,6 +1077,12 @@ async function insertPlayerUI(playerNum) {
         if (po._id != res.player._id) {
             return;
         } // check if still same player
+        pEl.querySelector(".player-edit-btn").classList.toggle("outdated", res.differences.length > 0);
+    });
+    getParryggDifferences(po).then((res) => {
+        if (po._id != res.player._id) {
+            return;
+        } // outdated request - quit out
         pEl.querySelector(".player-edit-btn").classList.toggle("outdated", res.differences.length > 0);
     });
 
@@ -1617,10 +1662,12 @@ function casterDelete() {
 }
 async function openStreamQueueOptions(){
     let windowSettings = await openWindow("streamqueue-settings", {
-        "tournamentSlug": usedTournamentWebsite == "smashgg" ? smashgg.selectedTournament : '',
-        "streamId": usedTournamentWebsite == "smashgg" ? smashgg.selectedStream : '',
+        "tournamentSlug": usedTournamentWebsite == "smashgg" ? smashgg.selectedTournament : parrygg.selectedTournament,
+        "streamId": usedTournamentWebsite == "smashgg" ? smashgg.selectedStream : parrygg.selectedStream,
         "smashgg-cache": smashgg.cache,
         "smashgg-token": smashgg.token,
+        "parrygg-token": parrygg.token,
+        "parrygg-cache": parrygg.cache,
         "tournamentWebsite": usedTournamentWebsite
     }, true);
     if (!windowSettings) { return; }
@@ -1630,7 +1677,13 @@ async function openStreamQueueOptions(){
         case "smashgg":
             applySmashggSettings(windowSettings.tournamentSlug, windowSettings.streamId);
             ipcRenderer.invoke('set', 'smashgg', { "tournament": windowSettings.tournamentSlug, "stream": windowSettings.streamId });
+            ipcRenderer.invoke('set', 'parrygg', { "tournament": "", "stream": null });
             break;
+            case "parrygg":
+                applyParryggSettings(windowSettings.tournamentSlug, windowSettings.streamId);
+                ipcRenderer.invoke('set', 'parrygg', { "tournament": parrygg.selectedTournament, "stream": parrygg.selectedStream });
+                ipcRenderer.invoke('set', 'smashgg', { "tournament": "", "stream": null });
+                break;
     }
 }
 function swapPlayer(playerNum1, playerNum2) {

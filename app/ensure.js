@@ -24,6 +24,7 @@ let dbStruct = [
     { "name": "player", "field": "birthday", "type": "date", "listhide": true },
     { "name": "player", "field": "pronoun", "type": "text", "listhide": true },
     { "name": "player", "field": "smashgg", "type": "number" },
+    { "name": "player", "field": "parrygg", "type": "text" },
     { "name": "player", "field": "twitter", "type": "text" },
     { "name": "player", "field": "twitch", "type": "text", "index": -4 },
     { "name": "player", "field": "steam", "type": "text", "listhide": true },

@@ -108,6 +108,9 @@
     "object-watcher": "^1.0.2",
     "obs-websocket-js": "^5.0.8",
     "rxjs": "^7.x",
-    "ws": "^8.20.0"
+    "ws": "^8.20.0",
+    "@parry-gg/client": "^1.0.10",
+    "google-protobuf": "^3.21.2",
+    "grpc-web": "^1.5.0"
   }
 }
