@@ -40,9 +40,12 @@ async function applySmashggSet(setId) {
 	scoreboard.startgg.phase = set.phaseGroup.phase.id;
 
 
+	let slotIndex = 0;
 	for (let slot of set.slots) {
-		scoreboard.teams[(slot.slotIndex + 1)].name = (slot.entrant ? slot.entrant.name : "");
-		if (!slot.entrant) { continue; }
+		if (!slot.entrant) {
+			slotIndex++;
+			continue;
+		}
 		for (let participantIdx in slot.entrant.participants) {
 			let participant = slot.entrant.participants[participantIdx];
 			// get all players which have same smashgg ID or same name
@@ -62,12 +65,13 @@ async function applySmashggSet(setId) {
 				// no matching player found - create temp and insert
 				insertPlayer = { "name": participant.player.gamerTag, "id": participant.player.id.toString() };
 			}
-			scoreboard.teams[(slot.slotIndex + 1)].players[participantIdx] = new Player(insertPlayer);
+			scoreboard.players[slotIndex].player = new Player(insertPlayer);
+			slotIndex++;
 		}
-		teamSize = Math.max(teamSize, slot.entrant.participants.length);
 	}
 
-	setTeamSize(teamSize);
+	teamSize = scoreboard.players.length;
+	setPlayerSize(teamSize);
 
 	if (set.phaseGroup.bracketType == "ROUND_ROBIN") {
 		set.fullRoundText = `${set.phaseGroup.phase.name} ${set.phaseGroup.displayIdentifier}`;
@@ -91,6 +95,8 @@ async function applySmashggSet(setId) {
 	fire("scoreboardsmashggchanged");
 	fire("scoreboardteamschanged");
 	fire("scoreboardchanged");
+	resetLife();
+	resetScore();
 
 	bgWork.finish("applySmashggSet");
 }

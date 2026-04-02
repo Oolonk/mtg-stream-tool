@@ -909,9 +909,9 @@ async function setTheme(name) {
 
 function setPlayerSize(size) {
     size = parseInt(size || 1);
-    if(size < minAmountPlayers){
+    if(minAmountPlayers != null && size < minAmountPlayers){
         size = minAmountPlayers;
-    } else if(size > maxAmountPlayers){
+    } else if(maxAmountPlayers != null && size > maxAmountPlayers){
         size = maxAmountPlayers;
     }
     document.getElementById('playersize-select').value = size;

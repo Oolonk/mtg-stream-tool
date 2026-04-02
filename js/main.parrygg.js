@@ -153,7 +153,7 @@ async function applyParryggSet(setId, bracketId, phaseId, eventId, tournamentId)
     let slotIndex = 0;
     for (let slot of entrants) {
 
-        scoreboard.teams[(slotIndex + 1)].name = (slot.name ? slot.name : "");
+        // scoreboard.teams[(slotIndex + 1)].name = (slot.name ? slot.name : "");
         var participantIdx = 0;
         if(!slot.entrant || !slot.entrant.usersList) {
             slotIndex++;
@@ -164,7 +164,7 @@ async function applyParryggSet(setId, bracketId, phaseId, eventId, tournamentId)
             let res = await db.get("player", {  "parrygg": participant.id  }, Player);
 
             // filter only with matching smashgg ID
-            let exactRes = res.filter(x => x.smashgg == participant.id).slice(0, 1);
+            let exactRes = res.filter(x => x.parrygg == participant.id).slice(0, 1);
             let insertPlayer;
             if (exactRes.length == 1) {
                 // has matching ID - just insert
@@ -177,16 +177,12 @@ async function applyParryggSet(setId, bracketId, phaseId, eventId, tournamentId)
                 // no matching player found - create temp and insert
                 insertPlayer = { "name": participant.gamerTag, "id": participant.id };
             }
-            scoreboard.teams[(slotIndex + 1)].players[participantIdx] = new Player(insertPlayer);
-            participantIdx++;
+            scoreboard.players[slotIndex].player = new Player(insertPlayer);
+            slotIndex++;
         }
-        teamSize = Math.max(teamSize, slot.entrant.usersList.length);
-
-
-        slotIndex++;
     }
-
-    setTeamSize(teamSize);
+    teamSize = scoreboard.players.length;
+    setPlayerSize(teamSize);
     set.fullRoundText = parrygg.getSetRoundName(set, bracket);
     set.eventName = event.name;
     set.slug = tournament.slug;
@@ -203,6 +199,8 @@ async function applyParryggSet(setId, bracketId, phaseId, eventId, tournamentId)
     fire("scoreboardparryggchanged");
     fire("scoreboardteamschanged");
     fire("scoreboardchanged");
+    resetLife();
+    resetScore();
 
     bgWork.finish("applyParryggSet");
 }
