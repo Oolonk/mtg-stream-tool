@@ -1047,7 +1047,6 @@ function buildPlayerSeatOrder(){
 
 async function insertPlayerUI(playerNum) {
     let po = scoreboard.players[playerNum].player;
-    console.log(po);
 
     let pEl = document.getElementById("playeritem-" + playerNum);
 
