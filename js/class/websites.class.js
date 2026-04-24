@@ -810,40 +810,45 @@ class ParryggWrapper extends WebsiteWrapper{
                 }
             }
         });
-        if (bracket.type == parrygg.parrygg.BracketType.BRACKET_TYPE_DOUBLE_ELIMINATION) {
-            if (set.grandFinals) {
-                return "Grand Finals";
-            } else if(set.winnersSide){
-                if(set.round === highestWinnersRound){
-                    return "Winners Final";
-                } else if(set.round === highestWinnersRound -1){
-                    return "Winners Semi-Final";
-                } else if(set.round === highestWinnersRound -2){
-                    return "Winners Quarter-Final";
+        switch (bracket.type){
+            case parrygg.parrygg.BracketType.BRACKET_TYPE_DOUBLE_ELIMINATION:
+                if (set.match.grandFinals) {
+                    return "Grand Finals";
+                } else if(set.match.winnersSide){
+                    if(set.match.round === highestWinnersRound){
+                        return "Winners Final";
+                    } else if(set.match.round === highestWinnersRound -1){
+                        return "Winners Semi-Final";
+                    } else if(set.match.round === highestWinnersRound -2){
+                        return "Winners Quarter-Final";
+                    }
+                    return "Winners Round " + set.match.round;
+                } else {
+                    if(set.match.round === highestLosersRound){
+                        return "Losers Final";
+                    } else if(set.match.round === highestLosersRound -1){
+                        return "Losers Semi-Final";
+                    } else if(set.match.round === highestLosersRound -2){
+                        return "Losers Quarter-Final";
+                    } else if(set.match.round === highestLosersRound -3){
+                        return "Losers Top 8";
+                    }
+                    return "Losers Round " + set.match.round;
                 }
-                return "Winners Round " + set.round;
-            } else {
-                if(set.round === highestLosersRound){
-                    return "Losers Final";
-                } else if(set.round === highestLosersRound -1){
-                    return "Losers Semi-Final";
-                } else if(set.round === highestLosersRound -2){
-                    return "Losers Quarter-Final";
-                } else if(set.round === highestLosersRound -3){
-                    return "Losers Top 8";
+                break;
+            case parrygg.parrygg.BracketType.BRACKET_TYPE_DOUBLE_ELIMINATION:
+                return "Round " + set.match.round;
+                break;
+            case parrygg.parrygg.BracketType.BRACKET_TYPE_ROUND_ROBIN:
+                var round = bracket.name;
+                if(round == "Bracket"){
+                    round = "Round Robin";
                 }
-                return "Losers Round " + set.round;
-            }
-        } else if(bracket.type === parrygg.parrygg.BracketType.BRACKET_TYPE_SINGLE_ELIMINATION) {
-            return "Round " + set.round;
-        } else if(bracket.type === parrygg.parrygg.BracketType.BRACKET_TYPE_ROUND_ROBIN) {
-            var round = bracket.name;
-            if(round == "Bracket"){
-                round = "Round Robin";
-            }
-            return round;
+                break;
+            default:
+                return "";
+                break;
         }
-        return "";
     }
 
     getAdditionalTournamentInfos(tournament) {
@@ -861,6 +866,25 @@ class ParryggWrapper extends WebsiteWrapper{
             pictures: this.getUserPictures(user)
         }
         return await additional;
+    }
+    async getAdditionalSetInfos(set){
+        set.hierarchy.pathsList.forEach((path => {
+            switch (path.type) {
+                case this.parrygg.PathType.PATH_TYPE_EVENT:
+                    set.event = path;
+                    break;
+                case this.parrygg.PathType.PATH_TYPE_PHASE:
+                    set.phase = path;
+                    break;
+                case this.parrygg.PathType.PATH_TYPE_BRACKET:
+                    set.bracket = path;
+                    break;
+                case this.parrygg.PathType.PATH_TYPE_TOURNAMENT:
+                    set.tournament = path;
+                    break;
+            }
+        }));
+        return set;
     }
     async convertRegion(countryCode, regionCode){
         // var country = await this.convertCountry(countryCode);
@@ -1070,46 +1094,34 @@ class ParryggWrapper extends WebsiteWrapper{
         this.brackets = {tournament: tournamentSlug, events: events};
     }
 
-    async getSetsFromStreamQueue() {
+    async getSetsFromStreamQueue(){
         var sets = [];
         if (!this.brackets || !this.brackets.events) {
             return sets;
         }
 
-        // Iterate events (works for arrays or objects)
-        for (const [eventId, event] of Object.entries(this.brackets.events)) {
-            if (!event.phases) { continue; }
-            // Iterate phases (works for arrays or objects)
-            for (const [phaseId, phase] of Object.entries(event.phases)) {
-                const bracketIds = phase.brackets;
-                if (!Array.isArray(bracketIds) || bracketIds.length === 0) { continue; }
-
-                // Create promises for all bracket fetches in this phase
-                const bracketPromises = bracketIds.map(async (bracketId) => {
-                    var bracket = await this.getBracket(bracketId);
-                    if( bracket === null) {
-                        return null;
-                    }
-                    var matches =  bracket.matchesList;
-                    // var rightStates = [this.parrygg.MatchState.MATCH_STATE_PENDING, this.parrygg.MatchState.MATCH_STATE_IN_PROGRESS, this.parrygg.MatchState.MATCH_STATE_READY];
-                    var rightStates = [this.parrygg.MatchState.MATCH_STATE_IN_PROGRESS, this.parrygg.MatchState.MATCH_STATE_READY];
-                    if(this.hideNotReadySets == false){
-                        rightStates.push(this.parrygg.MatchState.MATCH_STATE_PENDING);
-                    }
-                    //
-                    return matches.filter(match => rightStates.includes(match.state)).map(match => Object.assign(match, {event: {id: eventId, name: event.name}, phase: {id: phaseId, name: phase}, bracket: {id: bracketId}, tournament: {id: this.tournamentObject.id, name: this.tournamentObject.name}}));
-                });
-
-                // Wait for all brackets in this phase and add successful results
-                const results = await Promise.all(bracketPromises);
-                results.forEach(r => { if (r) {
-                    r.forEach(bracket => {
-                        sets.push(bracket);
-                    })} });
+        var request = new this.parrygg.GetMatchesRequest();
+        const matchesFilter = new this.parrygg.MatchesFilter();
+        const tournamentIdentifier = new this.parrygg.TournamentIdentifier();
+        tournamentIdentifier.setTournamentSlug(this.selectedTournament);
+        matchesFilter.setTournament(tournamentIdentifier);
+        request = request.setFilter(matchesFilter);
+        try {
+            const response = await this.matchClient.getMatches(
+                request,
+                this.createAuthMetadata,
+            );
+            sets = response.getMatchesList()
+            sets = await Promise.all(sets.map(async (set) => await Object.assign(set.toObject(), await this.getAdditionalSetInfos(set.toObject()))));
+            var rightStates = [this.parrygg.MatchState.MATCH_STATE_IN_PROGRESS, this.parrygg.MatchState.MATCH_STATE_READY];
+            if(this.hideNotReadySets == false){
+                rightStates.push(this.parrygg.MatchState.MATCH_STATE_PENDING);
             }
+            sets = await sets.filter(match => rightStates.includes(match.match.state));
+        }catch (error) {
+            console.error(error);
         }
         return await sets;
-
     }
 
     async getEntrantFromSeedAndBracket(slotId, bracketId, cacheMaxAge) {
@@ -1132,6 +1144,9 @@ class ParryggWrapper extends WebsiteWrapper{
                 if(participantNew && participantNew.name == ""){
                     if(participantNew.entrant.usersList.length > 0){
                         participantNew.name = participantNew.entrant.usersList[0].gamerTag;
+                        if(participantNew.entrant.usersList[0].sponsorName != ''){
+                            participantNew.name = participantNew.entrant.usersList[0].sponsorName + ' | ' +  participantNew.entrant.usersList[0].gamerTag;
+                        }
                     }
                 }
                 this.setCache("entrantfromseedandbracket-parry", slotId + '|' + bracketId, participantNew);
@@ -1231,7 +1246,7 @@ class ParryggWrapper extends WebsiteWrapper{
                     request,
                     this.createAuthMetadata,
                 );
-                set = Object.assign(response.getMatch().toObject(), {});
+                set = await Object.assign(response.getMatch().toObject(), await this.getAdditionalSetInfos(response.getMatch().toObject()));
                 this.setCache("set-parry", setId, set);
             } catch (error) {
                 console.error(error);

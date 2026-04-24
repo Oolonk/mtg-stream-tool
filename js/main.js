@@ -115,11 +115,14 @@ async function changePlayerAmount() {
     maxAmountPlayers = themeMaxAmount;
     document.getElementById('playersize-select').min = themeMinAmount;
     document.getElementById('playersize-select').max = themeMaxAmount;
-        if (scoreboard.players.length < themeMinAmount) {
-            setPlayerSize(themeMinAmount);
-        } else if (scoreboard.players.length > themeMaxAmount) {
-            setPlayerSize(themeMaxAmount);
-        }
+    if (scoreboard.players.length < themeMinAmount) {
+        setPlayerSize(themeMinAmount);
+    } else if (scoreboard.players.length > themeMaxAmount) {
+        setPlayerSize(themeMaxAmount);
+    }
+    for(var i = 0; i < scoreboard.players.length; i++) {
+        insertPlayerUI(i);
+    }
 }
 async function init() {
     hold("scoreboardchanged");
@@ -465,6 +468,10 @@ function buildTeamPlayerList() {
             }
 
             teamPlayerField.appendChild(playerItemEl);
+            setTimeout(() => {
+                insertPlayerUI(i);
+            }, 100);
+
         }
     fire("scoreboardseatorderchanged");
 }
@@ -1034,34 +1041,13 @@ function assignPlayerPort(playerNum, color) {
     fire("scoreboardchanged", true);
 }
 
-function setPlayerActive(teamNum, playerNum) {
-    let el = document.getElementById('sb-players-' + teamNum);
-    let boxes = el.getElementsByClassName('player-select');
-    for (let i in boxes) {
-        boxes[i].checked = playerNum == i;
-    }
-    scoreboard.teams[teamNum].selected = playerNum;
-    fire("scoreboardchanged", true);
-    buildPlayerSeatOrder();
-}
-
 function buildPlayerSeatOrder(){
     fire("scoreboardseatorderchanged");
 }
 
-function setPlayerOut(teamNum, playerNum) {
-    let el = document.getElementById('sb-players-' + teamNum);
-    let btn = el.querySelector('#playeritem-' + teamNum + '-' + playerNum + ' .player-out');
-    let btns = el.querySelectorAll('.player-out');
-
-    btn.classList.toggle("out");
-    scoreboard.teams[teamNum].out = [].map.call(btns, x => x.classList.contains("out"));
-    fire("scoreboardchanged", true);
-}
-
 async function insertPlayerUI(playerNum) {
     let po = scoreboard.players[playerNum].player;
-
+    console.log(po);
 
     let pEl = document.getElementById("playeritem-" + playerNum);
 
@@ -1161,8 +1147,8 @@ function insertScoreboardData(newScoreboard) {
     updatedUsedCards();
 
     // Fix player object Instances
-    for (let teamNum in scoreboard.teams) {
-        scoreboard.teams[teamNum].players = scoreboard.teams[teamNum].players.map((po) => (po instanceof Player ? po : new Player(po)));
+    for (let teamNum in scoreboard.players) {
+        scoreboard.players[teamNum].player = scoreboard.players[teamNum].player instanceof Player ? scoreboard.players[teamNum].player : new Player(scoreboard.players[teamNum].player);
     }
 
     // Fix caster object instances
@@ -1176,13 +1162,6 @@ function insertScoreboardData(newScoreboard) {
         }
     }
 
-    // insert ports
-        for (let playerNum = 0; playerNum < scoreboard.players.length; playerNum++) {
-            // for (let portNum = 1; portNum <= portAmount; portNum++) {
-            //     let hasPort = scoreboard.ports[portNum] != null && scoreboard.ports[portNum][0] == teamNum && scoreboard.ports[portNum][1] == playerNum;
-            //     document.getElementById("playerport-" + portNum + "-" + teamNum + "-" + playerNum).classList.toggle("checked", hasPort);
-            // }
-        }
     var matchmakingValue = document.getElementById("matchmaking-value");
     matchmakingValue.value = scoreboard.matchformat.value;
     var matchmakingMode = document.getElementById("matchmaking-mode");
@@ -1237,7 +1216,6 @@ async function editPlayer(arg) {
     }
 
     let res = await openWindow("database-entry", {db: "player", entry: new Player(po)});
-
     if (parentEl && parseInt(parentEl.dataset.returnId) == returnId) {
         console.log("edit player res:", res);
     }

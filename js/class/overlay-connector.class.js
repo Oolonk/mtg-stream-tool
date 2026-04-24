@@ -90,8 +90,9 @@ class OverlayConnector {
                 let sb = data.data.scoreboard;
                 let db = data.data.dbEntries;
                 this.cache.scoreboard = sb;
-                for (let teamNum in sb.teams) {
-                    sb.teams[teamNum].players = this.assignPrototype(sb.teams[teamNum].players, Player);
+                console.log(sb)
+                for (let teamNum in sb.players) {
+                    sb.players[teamNum].player = this.assignPrototype(sb.players[teamNum].player, Player);
                 }
                 sb.caster = this.assignPrototype(sb.caster, Player);
                 for (let dbIndex in db) {
@@ -218,10 +219,6 @@ class OverlayConnector {
     getFieldValue(name) {
         let field = this.getField(name);
         return field.value;
-    }
-
-    get TeamSize() {
-        return Math.max(this.cache.scoreboard.teams[1].players.length, this.cache.scoreboard.teams[2].players.length);
     }
 
     assignPrototype(docs, proto) {
