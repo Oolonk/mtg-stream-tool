@@ -18,6 +18,7 @@ function Scryfall() {
     this.nedb = null;
 }
 Scryfall.prototype.getBulkData = async function getBulkData(lastCreated = null) {
+    console.log("Scryfall.getBulkData() is not yet implemented");
     try {
         this.event.emit('fetchingBulkData', { lastCreated });
         const responseBulks = await fetch(`${this.base_url}/bulk-data`, {

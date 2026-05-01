@@ -1,15 +1,46 @@
+const { VitePlugin } = require('@electron-forge/plugin-vite');
+
 module.exports = {
-  make_targets: {
-    win32: ['squirrel', 'zip']
+  packagerConfig: {
+    executableName: 'mtg-stream-tool',
+    icon: './app/logo.ico',
+    ignore: [
+      '.gitignore',
+      'regions.json',
+      'changelog.txt',
+      'README.md',
+      'scoreboard.json',
+    ],
   },
-  electronPackagerConfig: {
-    packageManager: 'npm',
-    asar: true,
-    icon: './img/logo.ico'
-  },
-  electronWinstallerConfig: {
-    name: 'MTG Stream Tool',
-    setupIcon: './img/logo.ico',
-    loadingGif: './img/loading.gif'
-  }
-}
+  makers: [
+    {
+      name: '@electron-forge/maker-squirrel',
+      config: {
+        name: 'mtg-stream-tool',
+        title: 'MTG Stream Tool',
+        setupIcon: './app/logo.ico',
+        loadingGif: 'img/loading.gif',
+      },
+    },
+    {
+      name: '@electron-forge/maker-zip',
+    },
+  ],
+  plugins: [
+    new VitePlugin({
+      build: [
+        {
+          entry: 'app/main.ts',
+          config: 'vite.main.config.ts',
+          target: 'main',
+        },
+      ],
+      renderer: [
+        {
+          name: 'main_window',
+          config: 'vite.renderer.config.ts',
+        },
+      ],
+    }),
+  ],
+};
