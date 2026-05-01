@@ -31,7 +31,7 @@ async function displayParryggCurrent() {
         await parrygg.getEntrantFromSeedAndBracket(slot.seedId, scoreboard.parrygg.bracket)
     )));
     document.querySelector("#stream-queue .current").innerText = (entrants ? entrants.map(x =>
-        x ? x.name : "N/A").join(" vs ") : 'No set selected'
+            x ? x.name : "N/A").join(" vs ") : 'No set selected'
     );
     for (let itemEl of document.querySelectorAll("#stream-queue .list .sets > div")) {
         itemEl.classList.toggle("selected", set && itemEl.dataset.setId == set.id);
@@ -75,7 +75,7 @@ async function displayParryggStreamQueue(sets) {
 
     // add/edit sets
     sets.forEach(async (set, idx) => {
-        set.fullRoundText = parrygg.getSetRoundName(set, await parrygg.getBracket(set.bracket.id));
+        set.fullRoundText = set.round.label;
         var entrants = await Promise.all(await set.match.slotsList.map(async slot => (
             await parrygg.getEntrantFromSeedAndBracket(slot.seedId, set.bracket.id)
         )));
