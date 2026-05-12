@@ -92,7 +92,7 @@ class OverlayConnector {
                 this.cache.scoreboard = sb;
                 console.log(sb)
                 for (let teamNum in sb.players) {
-                    sb.players[teamNum].player = this.assignPrototype(sb.players[teamNum].player, Player);
+                    sb.players[teamNum].player = this.assignPrototype([sb.players[teamNum].player], Player)[0];
                 }
                 sb.caster = this.assignPrototype(sb.caster, Player);
                 for (let dbIndex in db) {

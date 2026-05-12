@@ -1147,7 +1147,9 @@ function insertScoreboardData(newScoreboard) {
 
     // Fix player object Instances
     for (let teamNum in scoreboard.players) {
+        console.log(scoreboard.players[teamNum].player);
         scoreboard.players[teamNum].player = scoreboard.players[teamNum].player instanceof Player ? scoreboard.players[teamNum].player : new Player(scoreboard.players[teamNum].player);
+        console.log(scoreboard.players[teamNum].player);
     }
 
     // Fix caster object instances
