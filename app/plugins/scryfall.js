@@ -145,7 +145,10 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
 
         if (card.image_uris && card.image_uris.png){
             const imageUrl = card.image_uris.png;
-            const response = await fetch(imageUrl);
+            const response = await fetch(imageUrl, {
+                method: 'GET',
+                headers: this.header
+            });
             if (!response.ok) throw new Error(`Failed fetching image: ${response.status} ${response.statusText}`);
             const buffer = Buffer.from(await response.arrayBuffer());
             await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id}.png`, buffer);
@@ -157,12 +160,18 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
             case 'transform':
             case 'modal_dfc':
             case 'meld': {
-                const resp1 = await fetch(card.card_faces[0].image_uris.png);
+                const resp1 = await fetch(card.card_faces[0].image_uris.png, {
+                    method: 'GET',
+                    headers: this.header
+                });
                 if (!resp1.ok) throw new Error(`Failed fetching image face 1: ${resp1.status}`);
                 const buf1 = Buffer.from(await resp1.arrayBuffer());
                 await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id}.png`, buf1);
 
-                const resp2 = await fetch(card.card_faces[1].image_uris.png);
+                const resp2 = await fetch(card.card_faces[1].image_uris.png, {
+                    method: 'GET',
+                    headers: this.header
+                });
                 if (!resp2.ok) throw new Error(`Failed fetching image face 2: ${resp2.status}`);
                 const buf2 = Buffer.from(await resp2.arrayBuffer());
                 await fsPromises.writeFile(`${APPRES}/assets/card/back/${card._id}.png`, buf2);
@@ -170,7 +179,10 @@ Scryfall.prototype.downloadCardImages = async function downloadCardImages(card) 
             }
             default: {
                 // fallback to first face
-                const resp = await fetch(card.card_faces && card.card_faces[0] ? card.card_faces[0].image_uris.png : null);
+                const resp = await fetch(card.card_faces && card.card_faces[0] ? card.card_faces[0].image_uris.png : null, {
+                    method: 'GET',
+                    headers: this.header
+                });
                 if (!resp || !resp.ok) throw new Error('No image available for card');
                 const buf = Buffer.from(await resp.arrayBuffer());
                 await fsPromises.writeFile(`${APPRES}/assets/card/front/${card._id || card._id}.png`, buf);
