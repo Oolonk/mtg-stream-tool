@@ -1,8 +1,67 @@
 const EventEmitter = require('events');
 const fs = require("fs");
 const fsPromises = fs.promises;
+const zlib = require("zlib");
+const {Readable} = require("stream");
+const {StringDecoder} = require("string_decoder");
 const {APP} = require("../electron");
 var events = new EventEmitter();
+
+// Scryfall serves the bulk files as gzipped JSONL. Depending on whether the CDN
+// sets Content-Encoding, fetch may or may not have decompressed the body already,
+// so the gzip header is detected instead of assumed.
+function toNodeStream(body) {
+    if (!body) throw new Error('Response has no body');
+    if (typeof body.pipe === 'function') return body;
+    return Readable.fromWeb(body);
+}
+
+// Reads the first two bytes, pushes them back and reports whether they are the gzip magic number.
+function startsWithGzipMagic(stream) {
+    return new Promise((resolve, reject) => {
+        let head = Buffer.alloc(0);
+        const cleanup = () => {
+            stream.removeListener('readable', onReadable);
+            stream.removeListener('end', onEnd);
+            stream.removeListener('error', onError);
+        };
+        const finish = () => {
+            cleanup();
+            if (head.length) stream.unshift(head);
+            resolve(head.length >= 2 && head[0] === 0x1f && head[1] === 0x8b);
+        };
+        const onReadable = () => {
+            const chunk = stream.read();
+            if (!chunk) return;
+            head = head.length ? Buffer.concat([head, chunk]) : chunk;
+            if (head.length >= 2) finish();
+        };
+        const onEnd = () => finish();
+        const onError = (err) => {
+            cleanup();
+            reject(err);
+        };
+        stream.on('readable', onReadable);
+        stream.once('end', onEnd);
+        stream.once('error', onError);
+    });
+}
+
+// Yields the stream line by line without buffering the whole file as one string.
+async function* readLines(stream) {
+    const decoder = new StringDecoder('utf8');
+    let buffer = '';
+    for await (const chunk of stream) {
+        buffer += decoder.write(chunk);
+        let index;
+        while ((index = buffer.indexOf('\n')) !== -1) {
+            yield buffer.slice(0, index);
+            buffer = buffer.slice(index + 1);
+        }
+    }
+    buffer += decoder.end();
+    if (buffer.length) yield buffer;
+}
 function Scryfall() {
     this.lastCreated = null;
     this.isRunning = false;
@@ -43,19 +102,70 @@ Scryfall.prototype.getBulkData = async function getBulkData(lastCreated = null) 
                 return null;
             }
         }
-
-        const downloadResp = await fetch(oracle.download_uri, {
-            method: 'GET',
-            headers: this.header
-        });
-        if (!downloadResp.ok) throw new Error(`Failed to download oracle_cards: ${downloadResp.status} ${downloadResp.statusText}`);
-
-        data.cards = await downloadResp.json();
+        data.cards = await this.downloadBulkCards(oracle);
         return data;
     } catch (err) {
         console.error('Scryfall.getBulkData error:', err);
         throw err;
     }
+};
+
+// Downloads a bulk-data entry (gzipped JSONL) and returns the parsed cards.
+Scryfall.prototype.downloadBulkCards = async function downloadBulkCards(bulk) {
+    const uri = bulk.jsonl_download_uri || bulk.download_uri;
+    if (!uri) throw new Error('Bulk data entry has no download uri');
+
+    const downloadResp = await fetch(uri, {
+        method: 'GET',
+        headers: {
+            'Accept'    : '*/*',
+            'User-Agent': this.header['User-Agent']
+        }
+    });
+    if (!downloadResp.ok) throw new Error(`Failed to download ${bulk.type}: ${downloadResp.status} ${downloadResp.statusText}`);
+
+    let source = toNodeStream(downloadResp.body);
+    if (await startsWithGzipMagic(source)) {
+        const gunzip = zlib.createGunzip();
+        source.once('error', (err) => gunzip.destroy(err));
+        source = source.pipe(gunzip);
+    }
+
+    const cards = [];
+    let lineNumber = 0;
+    let seenContent = false;
+    let jsonArray = null; // set when the payload is a legacy JSON array instead of JSONL
+    for await (const rawLine of readLines(source)) {
+        lineNumber++;
+        if (jsonArray) {
+            jsonArray.push(rawLine);
+            continue;
+        }
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (!seenContent && line[0] === '[') {
+            jsonArray = [rawLine];
+            continue;
+        }
+        seenContent = true;
+        try {
+            cards.push(JSON.parse(line));
+        } catch (err) {
+            console.warn(`Scryfall: skipping unparsable bulk line ${lineNumber}:`, err.message);
+            continue;
+        }
+        if (cards.length % 5000 === 0) {
+            this.event.emit('parsingBulkData', {parsed: cards.length});
+        }
+    }
+
+    if (jsonArray) {
+        const parsed = JSON.parse(jsonArray.join('\n'));
+        if (!Array.isArray(parsed)) throw new Error(`Unexpected bulk payload for ${bulk.type}`);
+        cards.push(...parsed);
+    }
+    this.event.emit('parsingBulkData', {parsed: cards.length});
+    return cards;
 };
 
 Scryfall.prototype.insertBulkData = async function insertBulkData(data) {
