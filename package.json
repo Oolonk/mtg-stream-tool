@@ -1,7 +1,7 @@
 {
   "name": "mtg-stream-tool",
   "productName": "MTG Stream Tool",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A Magic The Gathering Stream Tool",
   "main": "app/main.js",
   "scripts": {
@@ -88,29 +88,29 @@
     "productName": "MTG Stream Tool"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^7.11.1",
-    "@electron-forge/maker-squirrel": "^7.11.1",
-    "@electron-forge/maker-zip": "^7.11.1",
-    "electron": "^39.2.7",
-    "electron-builder": "^26.8.1",
-    "electron-forge-maker-appimage": "^26.8.1",
+    "@electron-forge/cli": "^8.0.1",
+    "@electron-forge/maker-squirrel": "^8.0.1",
+    "@electron-forge/maker-zip": "^8.0.1",
+    "electron": "^45.2.0",
+    "electron-builder": "^26.18.0",
+    "electron-forge-maker-appimage": "^26.18.0",
     "electron-packager": "^17.1.2",
-    "electron-winstaller": "^5.4.0"
+    "electron-winstaller": "^5.4.4"
   },
   "dependencies": {
     "@electron/remote": "^2.1.3",
     "@seald-io/nedb": "^4.1.2",
     "bonjour": "^3.5.1",
-    "express": "^5.2.1",
+    "express": "^5.3.0",
     "express-ws": "^5.0.2",
-    "fs-extra": "^11.3.4",
+    "fs-extra": "^11.4.1",
     "mana-font": "^1.18.0",
     "object-watcher": "^1.0.2",
     "obs-websocket-js": "^5.0.8",
     "rxjs": "^7.x",
-    "ws": "^8.20.0",
-    "@parry-gg/client": "^1.0.12",
-    "google-protobuf": "^3.21.2",
+    "ws": "^8.22.0",
+    "@parry-gg/client": "^1.0.14",
+    "google-protobuf": "3.21.2",
     "grpc-web": "^1.5.0"
   }
 }

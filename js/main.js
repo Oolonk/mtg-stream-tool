@@ -1,6 +1,5 @@
 const {shell, ipcMain} = require('electron');
 const fs = require('fs');
-const path = require("path");
 const emitter = new (require("events"))();
 const decklistImporter = require("../app/plugins/decklistimporter.js");
 
